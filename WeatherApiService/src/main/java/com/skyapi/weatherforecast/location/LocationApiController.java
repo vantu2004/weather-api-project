@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skyapi.weatherforecast.common.Location;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
