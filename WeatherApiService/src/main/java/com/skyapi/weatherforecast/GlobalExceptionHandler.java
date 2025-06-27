@@ -21,6 +21,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.skyapi.weatherforecast.location.LocationNotFoundException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -65,7 +67,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(ConstraintViolationException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ResponseBody
-	public ErrorDTO handlerCOnstrainViolationException(HttpServletRequest request, Exception ex) {
+	public ErrorDTO handlerConstrainViolationException(HttpServletRequest request, Exception ex) {
 		ConstraintViolationException constraintViolationException = (ConstraintViolationException) ex;
 
 		ErrorDTO errorDTO = new ErrorDTO();
@@ -76,6 +78,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		constraintViolations.forEach(constraintViolation -> errorDTO
 				.addError(constraintViolation.getPropertyPath() + ": " + constraintViolation.getMessage()));
 
+		errorDTO.setPath(request.getServletPath());
+
+		LOGGER.error(ex.getMessage(), ex);
+
+		return errorDTO;
+	}
+
+	// refactor code cho LocationNotFoundException
+	@ExceptionHandler(LocationNotFoundException.class)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	@ResponseBody
+	public ErrorDTO handlerLocationNotFoundException(HttpServletRequest request, Exception ex) {
+		ErrorDTO errorDTO = new ErrorDTO();
+		errorDTO.setTimestamp(new Date());
+		errorDTO.setStatus(HttpStatus.NOT_FOUND.value());
+		errorDTO.addError(ex.getMessage());
 		errorDTO.setPath(request.getServletPath());
 
 		LOGGER.error(ex.getMessage(), ex);

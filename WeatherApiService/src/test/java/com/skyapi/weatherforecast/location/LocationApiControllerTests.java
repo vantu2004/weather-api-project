@@ -1,11 +1,13 @@
 package com.skyapi.weatherforecast.location;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Collections;
@@ -128,7 +130,12 @@ public class LocationApiControllerTests {
 		String code = "A";
 		String requestUri = END_POINT_PATH + "/" + code;
 
-		mockMvc.perform(get(requestUri)).andExpect(status().isNotFound()).andDo(print());
+		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(code);
+
+		Mockito.when(this.locationService.getLocationByCode(code)).thenThrow(locationNotFoundException);
+
+		mockMvc.perform(get(requestUri)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
 
 	@Test
@@ -158,13 +165,15 @@ public class LocationApiControllerTests {
 		locationDTO.setCountryCode("VN");
 		locationDTO.setEnabled(true);
 
-		Mockito.when(this.locationService.updateLocation(Mockito.any()))
-				.thenThrow(new LocationNotFoundException("Location Not Found!"));
+		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(locationDTO.getCode());
+
+		Mockito.when(this.locationService.updateLocation(Mockito.any())).thenThrow(locationNotFoundException);
 
 		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
 		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
-				.andExpect(status().isNotFound()).andDo(print());
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
 
 	@Test
@@ -211,9 +220,12 @@ public class LocationApiControllerTests {
 		String code = "A";
 		String requestUri = END_POINT_PATH + "/" + code;
 
-		Mockito.doThrow(LocationNotFoundException.class).when(this.locationService).deleteLocation(code);
+		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(code);
 
-		mockMvc.perform(delete(requestUri)).andExpect(status().isNotFound()).andDo(print());
+		Mockito.doThrow(locationNotFoundException).when(this.locationService).deleteLocation(code);
+
+		mockMvc.perform(delete(requestUri)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
 
 	@Test

@@ -17,39 +17,37 @@ public class RealtimeWeatherService {
 	private final RealtimeWeatherRepository realtimeWeatherRepository;
 	private final LocationRepository locationRepository;
 
-	public RealtimeWeather getRealtimeWeatherByCountryCodeAndCityName(Location location)
-			throws LocationNotFoundException {
+	public RealtimeWeather getRealtimeWeatherByCountryCodeAndCityName(Location location) {
 		String countryCode = location.getCountryCode();
 		String cityName = location.getCityName();
 
 		RealtimeWeather realtimeWeather = this.realtimeWeatherRepository.findByCountryCodeAndCityName(countryCode,
 				cityName);
 		if (realtimeWeather == null) {
-			throw new LocationNotFoundException("No location found with the given country code and the city name.");
+			throw new LocationNotFoundException(countryCode, cityName);
 		}
 
 		return realtimeWeather;
 	}
 
-	public RealtimeWeather getRealtimeWeatherByLocationCode(String locationCode) throws LocationNotFoundException {
+	public RealtimeWeather getRealtimeWeatherByLocationCode(String locationCode) {
 		RealtimeWeather realtimeWeather = this.realtimeWeatherRepository.findByLocationCode(locationCode);
 		if (realtimeWeather == null) {
-			throw new LocationNotFoundException("No location found with the given location code.");
+			throw new LocationNotFoundException(locationCode);
 		}
 
 		return realtimeWeather;
 	}
 
-	public RealtimeWeather updateRealtimeWeather(String locationCode, RealtimeWeather realtimeWeather)
-			throws LocationNotFoundException {
+	public RealtimeWeather updateRealtimeWeather(String locationCode, RealtimeWeather realtimeWeather) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {
-			throw new LocationNotFoundException("No location found with the given location code.");
+			throw new LocationNotFoundException(locationCode);
 		}
-		
+
 		realtimeWeather.setLocation(location);
 		realtimeWeather.setLastUpdated(new Date());
-		
+
 		if (location.getRealtimeWeather() != null) {
 			/*
 			 * khi test chỉ cần setLocation là đủ vì @MapsId đã tự ánh xạ location.getCode()

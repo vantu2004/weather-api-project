@@ -155,8 +155,10 @@ public class RealtimeWeatherApiControllerTests {
 		realtimeWeather.setWindSpeed(5);
 		realtimeWeather.setStatus("Snowy");
 
+		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(locationCode);
+
 		Mockito.when(this.realtimeWeatherService.updateRealtimeWeather(locationCode, realtimeWeather))
-				.thenThrow(LocationNotFoundException.class);
+				.thenThrow(locationNotFoundException);
 
 		String bodyContent = objectMapper.writeValueAsString(realtimeWeather);
 
@@ -168,7 +170,8 @@ public class RealtimeWeatherApiControllerTests {
 		 * để so sánh
 		 */
 		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent))
-				.andExpect(status().isNotFound()).andDo(print());
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
 
 	@Test

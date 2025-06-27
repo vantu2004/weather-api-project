@@ -21,16 +21,17 @@ public class LocationService {
 		return this.locationRepository.findAllUnTrashed();
 	}
 
-	public Location getLocationByCode(String code) {
-		return this.locationRepository.findByCode(code);
+	public Location getLocationByCode(String code){
+		Location location = this.locationRepository.findByCode(code);
+		if (location == null) {
+			throw new LocationNotFoundException(code);
+		}
+		return location;
 	}
 
-	public Location updateLocation(Location locationInRequest) throws LocationNotFoundException {
+	public Location updateLocation(Location locationInRequest){
 		String code = locationInRequest.getCode();
 		Location locationInDb = this.getLocationByCode(code);
-		if (locationInDb == null) {
-			throw new LocationNotFoundException("No location found with the given code:" + code);
-		}
 
 		locationInDb.setCityName(locationInRequest.getCityName());
 		locationInDb.setRegionName(locationInRequest.getRegionName());
@@ -41,12 +42,8 @@ public class LocationService {
 		return this.locationRepository.save(locationInDb);
 	}
 
-	public void deleteLocation(String code) throws LocationNotFoundException {
-		Location locationInDb = this.getLocationByCode(code);
-		if (locationInDb == null) {
-			throw new LocationNotFoundException("No location found with the given code:" + code);
-		}
-
+	public void deleteLocation(String code){
+		this.getLocationByCode(code);
 		this.locationRepository.trashByCode(code);
 	}
 }

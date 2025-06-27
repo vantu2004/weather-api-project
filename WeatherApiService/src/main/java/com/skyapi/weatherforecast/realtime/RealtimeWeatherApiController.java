@@ -15,7 +15,6 @@ import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.common.RealtimeWeather;
-import com.skyapi.weatherforecast.location.LocationNotFoundException;
 import com.skyapi.weatherforecast.util.CommonUtility;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,37 +46,21 @@ public class RealtimeWeatherApiController {
 		} catch (GeolocationException e) {
 			LOGGER.error(e.getMessage(), e);
 			return ResponseEntity.badRequest().build();
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
 		}
 	}
 
 	@GetMapping("/{locationCode}")
 	public ResponseEntity<?> getRealtimeByLocationCode(@PathVariable("locationCode") String locationCode) {
-		try {
-			RealtimeWeather realtimeWeather = this.realtimeWeatherService
-					.getRealtimeWeatherByLocationCode(locationCode);
-
-			return ResponseEntity.ok(convertEntityToDTO(realtimeWeather));
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
-		}
+		RealtimeWeather realtimeWeather = this.realtimeWeatherService.getRealtimeWeatherByLocationCode(locationCode);
+		return ResponseEntity.ok(convertEntityToDTO(realtimeWeather));
 	}
 
 	@PutMapping("{locationCode}")
 	public ResponseEntity<?> updateRealtimeWeather(@PathVariable("locationCode") String locationCode,
 			@Valid @RequestBody RealtimeWeather realtimeWeatherInRequest) {
-		try {
-			RealtimeWeather realtimeWeather = this.realtimeWeatherService.updateRealtimeWeather(locationCode,
-					realtimeWeatherInRequest);
-
-			return ResponseEntity.ok(convertEntityToDTO(realtimeWeather));
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
-		}
+		RealtimeWeather realtimeWeather = this.realtimeWeatherService.updateRealtimeWeather(locationCode,
+				realtimeWeatherInRequest);
+		return ResponseEntity.ok(convertEntityToDTO(realtimeWeather));
 	}
 
 	private RealtimeWeatherDTO convertEntityToDTO(RealtimeWeather realtimeWeather) {
