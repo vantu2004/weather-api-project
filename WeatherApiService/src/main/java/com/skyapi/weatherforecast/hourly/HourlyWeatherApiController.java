@@ -1,0 +1,144 @@
+package com.skyapi.weatherforecast.hourly;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.coyote.BadRequestException;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.skyapi.weatherforecast.GeolocationException;
+import com.skyapi.weatherforecast.GeolocationService;
+import com.skyapi.weatherforecast.common.HourlyWeather;
+import com.skyapi.weatherforecast.common.Location;
+import com.skyapi.weatherforecast.location.LocationNotFoundException;
+import com.skyapi.weatherforecast.util.CommonUtility;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/v1/hourly")
+@RequiredArgsConstructor
+/*
+ * trường hợp muốn validate với @RequestParam/@PathVariable/@ModelAttribute thì
+ * mới cần, còn với @RequestBody đã có @Valid/@Validated phía trc thì ko cần
+ */
+@Validated
+public class HourlyWeatherApiController {
+	private final static Logger LOGGER = LoggerFactory.getLogger(HourlyWeatherApiController.class);
+
+	private final GeolocationService geolocationService;
+	private final HourlyWeatherService hourlyWeatherService;
+	private final ModelMapper modelMapper;
+
+	@GetMapping
+	public ResponseEntity<?> listHourlyForecastByIPAddress(HttpServletRequest request) {
+		try {
+			String ipAddress = CommonUtility.getIpAddress(request);
+			Location location = this.geolocationService.getLocationByIp2Location(ipAddress);
+
+			// X-Current-Hour không phải header mặc định mà tự định nghĩa
+			int currentHour = Integer.parseInt(request.getHeader("X-Current-Hour"));
+
+			List<HourlyWeather> hourlyWeathers = this.hourlyWeatherService.getListHourlyWeather(location, currentHour);
+
+			if (hourlyWeathers.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+
+			return ResponseEntity.ok().body(convertListHourlyWeatherToDTO(hourlyWeathers));
+		} catch (NumberFormatException | GeolocationException e) {
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.badRequest().build();
+		} catch (LocationNotFoundException e) {
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@GetMapping("/{locationCode}")
+	public ResponseEntity<?> listHourlyForecastByLocationCode(@PathVariable("locationCode") String locationCode,
+			HttpServletRequest request) {
+		try {
+			// X-Current-Hour không phải header mặc định mà tự định nghĩa
+			int currentHour = Integer.parseInt(request.getHeader("X-Current-Hour"));
+
+			List<HourlyWeather> hourlyWeathers = this.hourlyWeatherService
+					.getHourlyWeatherByLocationCodeAndCurrentHour(locationCode, currentHour);
+
+			if (hourlyWeathers.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+
+			return ResponseEntity.ok().body(convertListHourlyWeatherToDTO(hourlyWeathers));
+		} catch (NumberFormatException e) {
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.badRequest().build();
+		} catch (LocationNotFoundException e) {
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@PutMapping("/{locationCode}")
+	public ResponseEntity<?> updateHourlyForecast(@PathVariable("locationCode") String locationCode,
+			@Valid @RequestBody List<HourlyWeatherDTO> hourlyWeatherDTOs) throws BadRequestException {
+
+		if (hourlyWeatherDTOs.isEmpty()) {
+			throw new BadRequestException("Hourly forecast data cannot be empty.");
+		}
+
+		List<HourlyWeather> hourlyWeathers = this.convertListHourlyWeatherDTOToEntity(hourlyWeatherDTOs);
+
+		try {
+			List<HourlyWeather> updatedHourlyWeathers = this.hourlyWeatherService.updateHourlyWeather(locationCode,
+					hourlyWeathers);
+
+			return ResponseEntity.ok().body(this.convertListHourlyWeatherToDTO(updatedHourlyWeathers));
+		} catch (LocationNotFoundException e) {
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	private HourlyWeatherListDTO convertListHourlyWeatherToDTO(List<HourlyWeather> hourlyWeathers) {
+		HourlyWeatherListDTO hourlyWeatherListDTO = new HourlyWeatherListDTO();
+
+		Location location = hourlyWeathers.get(0).getId().getLocation();
+		hourlyWeatherListDTO.setLocation(location.toString());
+
+		for (HourlyWeather hourlyWeather : hourlyWeathers) {
+			// dùng cấu hình modelMapper bên class Main để ánh xạ được hourOfDay
+			HourlyWeatherDTO hourlyWeatherDTO = this.modelMapper.map(hourlyWeather, HourlyWeatherDTO.class);
+
+			hourlyWeatherListDTO.addHourlyWeatherDTO(hourlyWeatherDTO);
+		}
+
+		return hourlyWeatherListDTO;
+	}
+
+	private List<HourlyWeather> convertListHourlyWeatherDTOToEntity(List<HourlyWeatherDTO> hourlyWeatherDTOs) {
+		List<HourlyWeather> hourlyWeathers = new ArrayList<HourlyWeather>();
+
+		hourlyWeatherDTOs.forEach(hourlyWeatherDTO -> {
+			/*
+			 * dùng cấu hình modelMapper bên class Main để ánh xạ ngược field hourOfDay từ
+			 * DTO sang entity
+			 */
+			hourlyWeathers.add(modelMapper.map(hourlyWeatherDTO, HourlyWeather.class));
+		});
+
+		return hourlyWeathers;
+	}
+}

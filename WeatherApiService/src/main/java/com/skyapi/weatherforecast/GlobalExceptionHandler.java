@@ -2,7 +2,9 @@ package com.skyapi.weatherforecast;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +22,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -42,6 +46,43 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return errorDTO;
 	}
 
+	@ExceptionHandler(BadRequestException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ResponseBody
+	public ErrorDTO handlerBadRequestException(HttpServletRequest request, Exception ex) {
+		ErrorDTO errorDTO = new ErrorDTO();
+		errorDTO.setTimestamp(new Date());
+		errorDTO.setStatus(HttpStatus.BAD_REQUEST.value());
+		errorDTO.addError(ex.getMessage());
+		errorDTO.setPath(request.getServletPath());
+
+		LOGGER.error(ex.getMessage(), ex);
+
+		return errorDTO;
+	}
+
+	// bắt lỗi validate cho List<HourlyWeatherDTO> bên HourlyWeatherApiController
+	@ExceptionHandler(ConstraintViolationException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ResponseBody
+	public ErrorDTO handlerCOnstrainViolationException(HttpServletRequest request, Exception ex) {
+		ConstraintViolationException constraintViolationException = (ConstraintViolationException) ex;
+
+		ErrorDTO errorDTO = new ErrorDTO();
+		errorDTO.setTimestamp(new Date());
+		errorDTO.setStatus(HttpStatus.BAD_REQUEST.value());
+
+		Set<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations();
+		constraintViolations.forEach(constraintViolation -> errorDTO
+				.addError(constraintViolation.getPropertyPath() + ": " + constraintViolation.getMessage()));
+
+		errorDTO.setPath(request.getServletPath());
+
+		LOGGER.error(ex.getMessage(), ex);
+
+		return errorDTO;
+	}
+
 	@Override
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -56,7 +97,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		});
 
 		LOGGER.error(ex.getMessage(), ex);
-		
+
 		return new ResponseEntity<>(errorDTO, headers, status);
 	}
 

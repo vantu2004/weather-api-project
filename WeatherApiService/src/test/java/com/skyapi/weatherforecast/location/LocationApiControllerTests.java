@@ -54,9 +54,16 @@ public class LocationApiControllerTests {
 		location.setCountryName("Vietnam");
 		location.setCountryCode("VN");
 
+		LocationDTO locationDTO = new LocationDTO();
+		locationDTO.setCode(location.getCode());
+		locationDTO.setCityName(location.getCityName());
+		locationDTO.setRegionName(location.getRegionName());
+		locationDTO.setCountryName(location.getCountryName());
+		locationDTO.setCountryCode(location.getCountryCode());
+
 		Mockito.when(this.locationService.add(location)).thenReturn(location);
 
-		String bodyContent = objectMapper.writeValueAsString(location);
+		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
 		/*
 		 * khi call đến api thì đag truyền bodyContent và được convert về location
@@ -143,18 +150,18 @@ public class LocationApiControllerTests {
 
 	@Test
 	public void testUpdateLocationShouldReturn404NotFound() throws Exception {
-		Location location = new Location();
-		location.setCode("HCM_VN");
-		location.setCityName("Ho Chi Minh City");
-		location.setRegionName("Southern Vietnam");
-		location.setCountryName("Vietnam");
-		location.setCountryCode("VN");
-		location.setEnabled(true);
+		LocationDTO locationDTO = new LocationDTO();
+		locationDTO.setCode("HCM_VN");
+		locationDTO.setCityName("Ho Chi Minh City");
+		locationDTO.setRegionName("Southern Vietnam");
+		locationDTO.setCountryName("Vietnam");
+		locationDTO.setCountryCode("VN");
+		locationDTO.setEnabled(true);
 
-		Mockito.when(this.locationService.updateLocation(location))
+		Mockito.when(this.locationService.updateLocation(Mockito.any()))
 				.thenThrow(new LocationNotFoundException("Location Not Found!"));
 
-		String bodyContent = objectMapper.writeValueAsString(location);
+		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
 		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
 				.andExpect(status().isNotFound()).andDo(print());
@@ -162,15 +169,13 @@ public class LocationApiControllerTests {
 
 	@Test
 	public void testUpdateLocationShouldReturn400BadRequest() throws Exception {
-		Location location = new Location();
-		location.setCode("HCM_VN");
-		location.setCityName("Ho Chi Minh City");
-		location.setCountryCode("VN");
-		location.setEnabled(true);
+		LocationDTO locationDTO = new LocationDTO();
+		locationDTO.setCode("HCM_VN");
+		locationDTO.setCityName("Ho Chi Minh City");
+		locationDTO.setCountryCode("VN");
+		locationDTO.setEnabled(true);
 
-		Mockito.when(this.locationService.updateLocation(location)).thenReturn(location);
-
-		String bodyContent = objectMapper.writeValueAsString(location);
+		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
 		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print());
@@ -186,9 +191,16 @@ public class LocationApiControllerTests {
 		location.setCountryCode("VN");
 		location.setEnabled(true);
 
+		LocationDTO locationDTO = new LocationDTO();
+		locationDTO.setCode(location.getCode());
+		locationDTO.setCityName(location.getCityName());
+		locationDTO.setRegionName(location.getRegionName());
+		locationDTO.setCountryName(location.getCountryName());
+		locationDTO.setCountryCode(location.getCountryCode());
+
 		Mockito.when(this.locationService.updateLocation(location)).thenReturn(location);
 
-		String bodyContent = objectMapper.writeValueAsString(location);
+		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
 		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
 				.andExpect(status().isOk()).andDo(print());

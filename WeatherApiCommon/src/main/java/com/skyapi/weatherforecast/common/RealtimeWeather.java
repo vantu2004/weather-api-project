@@ -66,11 +66,6 @@ public class RealtimeWeather {
 	@JsonIgnore
 	private Location location;
 
-//	public void setLocation(Location location) {
-//		this.location = location;
-//		this.locationCode = location.getCode();
-//	}
-
 	// 2 hàm hashCode và equals dùng để test với hàm update
 	@Override
 	public int hashCode() {

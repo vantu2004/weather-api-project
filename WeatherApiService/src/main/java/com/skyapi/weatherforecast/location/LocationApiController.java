@@ -2,7 +2,9 @@ package com.skyapi.weatherforecast.location;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,10 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LocationApiController {
 	private final LocationService locationService;
+	private final ModelMapper modelMapper;
 
 	@PostMapping
-	public ResponseEntity<Location> addLocation(@RequestBody @Valid Location location) {
-		Location addedLocation = this.locationService.add(location);
+	public ResponseEntity<?> addLocation(@RequestBody @Valid LocationDTO locationDTO) {
+		Location addedLocation = this.locationService.add(this.convertLocationDTOToEntity(locationDTO));
 
 		/*
 		 * việc getCode() từ location trong trường hợp code null vẫn ko sao vì khi +
@@ -38,7 +41,7 @@ public class LocationApiController {
 		 * hàm created() có tác dụng tạo thêm Location trong header, nghĩa là cho biết
 		 * vị trí tài nguyên ms đc tạo nằm ở đâu
 		 */
-		return ResponseEntity.created(uri).body(addedLocation);
+		return ResponseEntity.created(uri).body(this.convertLocationEntityToDTO(addedLocation));
 	}
 
 	@GetMapping
@@ -48,7 +51,7 @@ public class LocationApiController {
 			return ResponseEntity.noContent().build();
 		}
 
-		return ResponseEntity.ok(locations);
+		return ResponseEntity.ok(this.convertListLocationEntityToDTO(locations));
 	}
 
 	@GetMapping("/{code}")
@@ -58,14 +61,14 @@ public class LocationApiController {
 			return ResponseEntity.notFound().build();
 		}
 
-		return ResponseEntity.ok(location);
+		return ResponseEntity.ok(this.convertLocationEntityToDTO(location));
 	}
 
 	@PutMapping
-	public ResponseEntity<?> updateLocation(@RequestBody @Valid Location locationInRequest) {
+	public ResponseEntity<?> updateLocation(@RequestBody @Valid LocationDTO locationDTO) {
 		try {
-			Location location = this.locationService.updateLocation(locationInRequest);
-			return ResponseEntity.ok(location);
+			Location location = this.locationService.updateLocation(this.convertLocationDTOToEntity(locationDTO));
+			return ResponseEntity.ok(this.convertLocationEntityToDTO(location));
 		} catch (LocationNotFoundException e) {
 			return ResponseEntity.notFound().build();
 		}
@@ -79,5 +82,22 @@ public class LocationApiController {
 		} catch (LocationNotFoundException e) {
 			return ResponseEntity.notFound().build();
 		}
+	}
+
+	private Location convertLocationDTOToEntity(@Valid LocationDTO locationDTO) {
+		return modelMapper.map(locationDTO, Location.class);
+	}
+
+	private LocationDTO convertLocationEntityToDTO(Location addedLocation) {
+		return modelMapper.map(addedLocation, LocationDTO.class);
+	}
+
+	private List<LocationDTO> convertListLocationEntityToDTO(List<Location> locations) {
+		/*
+		 * tạo 1 stream, stream sẽ dùng map() loop qua từng phần tử trong list, sau đó
+		 * gọi hàm xử lý và tạo ra 1 stream mới chứa DTO, cuối cùng là ép stream về list
+		 */
+		return locations.stream().map(location -> this.convertLocationEntityToDTO(location))
+				.collect(Collectors.toList());
 	}
 }

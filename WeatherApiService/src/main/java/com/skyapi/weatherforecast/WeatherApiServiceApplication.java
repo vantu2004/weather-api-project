@@ -6,6 +6,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import com.skyapi.weatherforecast.common.HourlyWeather;
+import com.skyapi.weatherforecast.hourly.HourlyWeatherDTO;
+
 @SpringBootApplication
 public class WeatherApiServiceApplication {
 
@@ -18,6 +21,19 @@ public class WeatherApiServiceApplication {
 	public ModelMapper getModelMapper() {
 		ModelMapper modelMapper = new ModelMapper();
 		modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+
+		/*
+		 * typeMap() tạo 1 ánh xạ tùy chỉnh từ class nguồn -> đích, Mặc định,
+		 * ModelMapper chỉ ánh xạ các thuộc tính cùng tên, cùng cấp. Vì hourOfDay nằm
+		 * trong id (một field lồng) nên dùng addMapping để tùy chỉnh ánh xạ cụ thể
+		 */
+		modelMapper.typeMap(HourlyWeather.class, HourlyWeatherDTO.class)
+				.addMapping(hourlyWeather -> hourlyWeather.getId().getHourOfDay(), HourlyWeatherDTO::setHourOfDay);
+
+		// ánh xạ ngược lại từ hourOfDay của DTO sang hourOfDay của entity
+		modelMapper.typeMap(HourlyWeatherDTO.class, HourlyWeather.class).addMapping(
+				hourlyWeatherDTO -> hourlyWeatherDTO.getHourOfDay(),
+				(hourlyWeather, value) -> hourlyWeather.getId().setHourOfDay(value == null ? 0 : (int) value));
 
 		return modelMapper;
 	}

@@ -12,6 +12,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 
+import com.skyapi.weatherforecast.common.HourlyWeather;
+import com.skyapi.weatherforecast.common.HourlyWeatherId;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.common.RealtimeWeather;
 
@@ -102,6 +104,38 @@ public class LocationRepositoryTests {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+
+	@Test
+	public void testAddhourlyWeatherData() {
+		Location location = this.locationRepository.findByCode("HCM_VN");
+		assertThat(location).isNotNull();
+
+		List<HourlyWeather> hourlyWeathers = location.getListHourlyWeather();
+
+		HourlyWeather forecast1 = HourlyWeather.builder().id(new HourlyWeatherId(8, location)).temperature(23)
+				.precipitation(10).status("Rainy").build();
+
+		HourlyWeather forecast2 = HourlyWeather.builder().id(new HourlyWeatherId(9, location)).temperature(32)
+				.precipitation(8).status("Snowy").build();
+
+		hourlyWeathers.add(forecast1);
+		hourlyWeathers.add(forecast2);
+
+		Location updatedLocation = this.locationRepository.save(location);
+
+		assertThat(updatedLocation.getListHourlyWeather()).isNotEmpty();
+	}
+
+	@Test
+	public void testGetLocationByCountryCodeAndCityName() {
+		String countryCode = "VN";
+		String cityName = "Ho Chi Minh City";
+		Location location = this.locationRepository.findByCountryCodeAndCityName(countryCode, cityName);
+
+		assertThat(location).isNotNull();
+		assertThat(location.getCountryCode()).isEqualTo(countryCode);
+		assertThat(location.getCityName()).isEqualTo(cityName);
 	}
 
 }
