@@ -1,0 +1,1 @@
+web: java -Dserver=$PORT[D[D[D[D[D[D.r.port=$PORT -jar $PATH_TO_JAR
