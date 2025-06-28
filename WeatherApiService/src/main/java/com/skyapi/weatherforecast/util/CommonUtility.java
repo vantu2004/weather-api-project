@@ -14,7 +14,7 @@ public class CommonUtility {
 		 * Lấy IP từ header X-FORWARDED-FOR, header này thường được proxy hoặc load
 		 * balancer (như Nginx) thêm vào để chỉ ra IP gốc của client.
 		 */
-		String ip = request.getHeader("X-FORWARED-FOR");
+		String ip = request.getHeader("X-FORWARDED-FOR");
 		if (StringUtils.isBlank(ip)) {
 			/*
 			 * Trường hợp IP ko có trog header thì Lấy IP người gửi request trực tiếp đến

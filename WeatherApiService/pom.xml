@@ -118,6 +118,18 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			
+			<plugin>
+				<!--Maven plugin giúp chạy các test-->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<!--Loại cấc file test-->
+						<exclude>**/*.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
