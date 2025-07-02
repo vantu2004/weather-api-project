@@ -77,6 +77,10 @@ public class Location {
 	@Builder.Default
 	private List<HourlyWeather> listHourlyWeather = new ArrayList<HourlyWeather>();
 
+	@OneToMany(mappedBy = "id.location", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<DailyWeather> listDailyWeathers = new ArrayList<DailyWeather>();
+
 	// phục vụ test với mockito
 	@Override
 	public int hashCode() {

@@ -12,6 +12,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 
+import com.skyapi.weatherforecast.common.DailyWeather;
+import com.skyapi.weatherforecast.common.DailyWeatherId;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeatherId;
 import com.skyapi.weatherforecast.common.Location;
@@ -107,7 +109,7 @@ public class LocationRepositoryTests {
 	}
 
 	@Test
-	public void testAddhourlyWeatherData() {
+	public void testAddHourlyWeatherData() {
 		Location location = this.locationRepository.findByCode("HCM_VN");
 		assertThat(location).isNotNull();
 
@@ -136,6 +138,26 @@ public class LocationRepositoryTests {
 		assertThat(location).isNotNull();
 		assertThat(location.getCountryCode()).isEqualTo(countryCode);
 		assertThat(location.getCityName()).isEqualTo(cityName);
+	}
+
+	@Test
+	public void testAddDailyWeatherData() {
+		Location location = this.locationRepository.findByCode("HCM_VN");
+		assertThat(location).isNotNull();
+
+		List<DailyWeather> dailyWeathers = location.getListDailyWeathers();
+
+		DailyWeather dailyWeather01 = DailyWeather.builder().id(new DailyWeatherId(2, 6, location)).maxTemp(30)
+				.minTemp(20).precipitation(25).status("Sunny").build();
+		DailyWeather dailyWeather02 = DailyWeather.builder().id(new DailyWeatherId(4, 7, location)).maxTemp(40)
+				.minTemp(30).precipitation(35).status("Rainy").build();
+
+		dailyWeathers.add(dailyWeather01);
+		dailyWeathers.add(dailyWeather02);
+
+		Location updatedLocation = this.locationRepository.save(location);
+
+		assertThat(updatedLocation.getListDailyWeathers()).isNotEmpty();
 	}
 
 }

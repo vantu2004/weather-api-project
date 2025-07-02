@@ -17,7 +17,10 @@ public class HourlyWeatherService {
 	private final HourlyWeatherRepository hourlyWeatherRepository;
 	private final LocationRepository locationRepository;
 
-	// controller truyền location lấy đc từ ipAddress nên không đủ thông tin
+	/*
+	 * controller truyền location lấy đc từ ipAddress nên không đủ thông tin (thiếu
+	 * locationCode)
+	 */
 	public List<HourlyWeather> getListHourlyWeather(Location location, int currentHour)
 			throws LocationNotFoundException {
 		String countryCode = location.getCountryCode();
@@ -25,14 +28,13 @@ public class HourlyWeatherService {
 		Location locationInDB = this.locationRepository.findByCountryCodeAndCityName(countryCode, cityName);
 
 		if (locationInDB == null) {
-			throw new LocationNotFoundException("No location found with the given country code and city name");
+			throw new LocationNotFoundException(countryCode, cityName);
 		}
 
 		return this.hourlyWeatherRepository.findByLocationCodeAndHourOfDay(locationInDB.getCode(), currentHour);
 	}
 
-	public List<HourlyWeather> getHourlyWeatherByLocationCodeAndCurrentHour(String locationCode, int currentHour)
-			throws LocationNotFoundException {
+	public List<HourlyWeather> getHourlyWeatherByLocationCodeAndCurrentHour(String locationCode, int currentHour) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {
 			throw new LocationNotFoundException("No location found with the given location code.");
@@ -41,11 +43,10 @@ public class HourlyWeatherService {
 		return this.hourlyWeatherRepository.findByLocationCodeAndHourOfDay(locationCode, currentHour);
 	}
 
-	public List<HourlyWeather> updateHourlyWeather(String locationCode, List<HourlyWeather> hourlyWeathers)
-			throws LocationNotFoundException {
+	public List<HourlyWeather> updateHourlyWeather(String locationCode, List<HourlyWeather> hourlyWeathers) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {
-			throw new LocationNotFoundException("No location found with the given location code.");
+			throw new LocationNotFoundException(locationCode);
 		}
 
 		hourlyWeathers.forEach(hourlyWeather -> {

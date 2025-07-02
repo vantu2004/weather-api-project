@@ -16,11 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
-import com.skyapi.weatherforecast.location.LocationNotFoundException;
 import com.skyapi.weatherforecast.util.CommonUtility;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,12 +56,9 @@ public class HourlyWeatherApiController {
 			}
 
 			return ResponseEntity.ok().body(convertListHourlyWeatherToDTO(hourlyWeathers));
-		} catch (NumberFormatException | GeolocationException e) {
+		} catch (NumberFormatException e) {
 			LOGGER.error(e.getMessage(), e);
 			return ResponseEntity.badRequest().build();
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
 		}
 	}
 
@@ -85,9 +80,6 @@ public class HourlyWeatherApiController {
 		} catch (NumberFormatException e) {
 			LOGGER.error(e.getMessage(), e);
 			return ResponseEntity.badRequest().build();
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
 		}
 	}
 
@@ -101,15 +93,10 @@ public class HourlyWeatherApiController {
 
 		List<HourlyWeather> hourlyWeathers = this.convertListHourlyWeatherDTOToEntity(hourlyWeatherDTOs);
 
-		try {
-			List<HourlyWeather> updatedHourlyWeathers = this.hourlyWeatherService.updateHourlyWeather(locationCode,
-					hourlyWeathers);
+		List<HourlyWeather> updatedHourlyWeathers = this.hourlyWeatherService.updateHourlyWeather(locationCode,
+				hourlyWeathers);
 
-			return ResponseEntity.ok().body(this.convertListHourlyWeatherToDTO(updatedHourlyWeathers));
-		} catch (LocationNotFoundException e) {
-			LOGGER.error(e.getMessage(), e);
-			return ResponseEntity.notFound().build();
-		}
+		return ResponseEntity.ok().body(this.convertListHourlyWeatherToDTO(updatedHourlyWeathers));
 	}
 
 	private HourlyWeatherListDTO convertListHourlyWeatherToDTO(List<HourlyWeather> hourlyWeathers) {

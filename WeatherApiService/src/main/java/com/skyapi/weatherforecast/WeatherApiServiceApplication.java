@@ -6,7 +6,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
+import com.skyapi.weatherforecast.daily.DailyWeatherDTO;
 import com.skyapi.weatherforecast.hourly.HourlyWeatherDTO;
 
 @SpringBootApplication
@@ -34,6 +36,16 @@ public class WeatherApiServiceApplication {
 		modelMapper.typeMap(HourlyWeatherDTO.class, HourlyWeather.class).addMapping(
 				hourlyWeatherDTO -> hourlyWeatherDTO.getHourOfDay(),
 				(hourlyWeather, value) -> hourlyWeather.getId().setHourOfDay(value == null ? 0 : (int) value));
+
+		modelMapper.typeMap(DailyWeather.class, DailyWeatherDTO.class)
+				.addMapping(dailyWeather -> dailyWeather.getId().getDayOfMonth(), DailyWeatherDTO::setDayOfMonth)
+				.addMapping(dailyWeather -> dailyWeather.getId().getMonth(), DailyWeatherDTO::setMonth);
+
+		modelMapper.typeMap(DailyWeatherDTO.class, DailyWeather.class)
+				.addMapping(dailyWeatherDTO -> dailyWeatherDTO.getDayOfMonth(),
+						(dailyWeather, value) -> dailyWeather.getId().setDayOfMonth(value == null ? 0 : (int) value))
+				.addMapping(dailyWeatherDTO -> dailyWeatherDTO.getMonth(),
+						(dailyWeather, value) -> dailyWeather.getId().setMonth(value == null ? 0 : (int) value));
 
 		return modelMapper;
 	}
