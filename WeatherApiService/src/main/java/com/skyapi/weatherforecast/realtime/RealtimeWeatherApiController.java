@@ -57,13 +57,21 @@ public class RealtimeWeatherApiController {
 
 	@PutMapping("{locationCode}")
 	public ResponseEntity<?> updateRealtimeWeather(@PathVariable("locationCode") String locationCode,
-			@Valid @RequestBody RealtimeWeather realtimeWeatherInRequest) {
+			@Valid @RequestBody RealtimeWeatherDTO realtimeWeatherDTO) {
+		RealtimeWeather realtimeWeatherInRequest = this.convertDTOToEntity(realtimeWeatherDTO);
+		realtimeWeatherInRequest.setLocationCode(locationCode);
+
 		RealtimeWeather realtimeWeather = this.realtimeWeatherService.updateRealtimeWeather(locationCode,
 				realtimeWeatherInRequest);
+		
 		return ResponseEntity.ok(convertEntityToDTO(realtimeWeather));
 	}
 
 	private RealtimeWeatherDTO convertEntityToDTO(RealtimeWeather realtimeWeather) {
 		return this.modelMapper.map(realtimeWeather, RealtimeWeatherDTO.class);
+	}
+
+	private RealtimeWeather convertDTOToEntity(RealtimeWeatherDTO realtimeWeatherDTO) {
+		return this.modelMapper.map(realtimeWeatherDTO, RealtimeWeather.class);
 	}
 }

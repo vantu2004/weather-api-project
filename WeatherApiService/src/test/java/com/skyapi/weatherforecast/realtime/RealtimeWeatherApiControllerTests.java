@@ -130,14 +130,14 @@ public class RealtimeWeatherApiControllerTests {
 		String locationCode = "HCM_VN";
 		String requestUri = END_POINT_PATH + "/" + locationCode;
 
-		RealtimeWeather realtimeWeather = new RealtimeWeather();
-		realtimeWeather.setTemperature(120);
-		realtimeWeather.setHumidity(-2);
-		realtimeWeather.setPrecipitation(-2);
-		realtimeWeather.setWindSpeed(-2);
-		realtimeWeather.setStatus("");
+		RealtimeWeatherDTO realtimeWeatherDTO = new RealtimeWeatherDTO();
+		realtimeWeatherDTO.setTemperature(120);
+		realtimeWeatherDTO.setHumidity(-2);
+		realtimeWeatherDTO.setPrecipitation(-2);
+		realtimeWeatherDTO.setWindSpeed(-2);
+		realtimeWeatherDTO.setStatus("");
 
-		String bodyContent = objectMapper.writeValueAsString(realtimeWeather);
+		String bodyContent = objectMapper.writeValueAsString(realtimeWeatherDTO);
 
 		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print());
@@ -148,19 +148,19 @@ public class RealtimeWeatherApiControllerTests {
 		String locationCode = "ABC";
 		String requestUri = END_POINT_PATH + "/" + locationCode;
 
-		RealtimeWeather realtimeWeather = new RealtimeWeather();
-		realtimeWeather.setTemperature(-25);
-		realtimeWeather.setHumidity(60);
-		realtimeWeather.setPrecipitation(50);
-		realtimeWeather.setWindSpeed(5);
-		realtimeWeather.setStatus("Snowy");
+		RealtimeWeatherDTO realtimeWeatherDTO = new RealtimeWeatherDTO();
+		realtimeWeatherDTO.setTemperature(-25);
+		realtimeWeatherDTO.setHumidity(60);
+		realtimeWeatherDTO.setPrecipitation(50);
+		realtimeWeatherDTO.setWindSpeed(5);
+		realtimeWeatherDTO.setStatus("Snowy");
 
 		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(locationCode);
 
-		Mockito.when(this.realtimeWeatherService.updateRealtimeWeather(locationCode, realtimeWeather))
+		Mockito.when(this.realtimeWeatherService.updateRealtimeWeather(Mockito.eq(locationCode), Mockito.any()))
 				.thenThrow(locationNotFoundException);
 
-		String bodyContent = objectMapper.writeValueAsString(realtimeWeather);
+		String bodyContent = this.objectMapper.writeValueAsString(realtimeWeatherDTO);
 
 		/*
 		 * khi call đến api thì đag truyền bodyContent và được convert về
@@ -191,23 +191,30 @@ public class RealtimeWeatherApiControllerTests {
 		realtimeWeather.setStatus("Snowy");
 		realtimeWeather.setLastUpdated(new Date());
 
-		realtimeWeather.setLocation(location);
+		RealtimeWeatherDTO realtimeWeatherDTO = new RealtimeWeatherDTO();
+		realtimeWeatherDTO.setTemperature(realtimeWeather.getTemperature());
+		realtimeWeatherDTO.setHumidity(realtimeWeather.getHumidity());
+		realtimeWeatherDTO.setPrecipitation(realtimeWeather.getPrecipitation());
+		realtimeWeatherDTO.setWindSpeed(realtimeWeather.getWindSpeed());
+		realtimeWeatherDTO.setStatus(realtimeWeather.getStatus());
+		realtimeWeatherDTO.setLastUpdated(realtimeWeather.getLastUpdated());
+
 		location.setRealtimeWeather(realtimeWeather);
+		realtimeWeather.setLocation(location);
 
 		String requestUri = END_POINT_PATH + "/" + location.getCode();
 
-		Mockito.when(this.realtimeWeatherService.updateRealtimeWeather(location.getCode(), realtimeWeather))
-				.thenReturn(realtimeWeather);
+		Mockito.when(this.realtimeWeatherService.updateRealtimeWeather(Mockito.eq(location.getCode()),
+				Mockito.any(RealtimeWeather.class))).thenReturn(realtimeWeather);
 
 		/*
 		 * vì dung @JsonIgnore cho 3 field locationCode/lastUpdated/location nên thông
 		 * tin 3 field này ko có trong bodyContent nhưng khi check với expectedLocation
 		 * vẫn đúng vì Mockito đag set để trả về realtimeWeather với các field đã update
 		 */
-		String bodyContent = objectMapper.writeValueAsString(realtimeWeather);
+		String bodyContent = this.objectMapper.writeValueAsString(realtimeWeatherDTO);
 
-		String expectedLocation = location.getCityName() + ", " + location.getRegionName() + ", "
-				+ location.getCountryName();
+		String expectedLocation = location.toString();
 
 		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
