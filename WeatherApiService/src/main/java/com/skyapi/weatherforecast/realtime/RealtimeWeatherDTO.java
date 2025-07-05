@@ -6,6 +6,7 @@ import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,8 @@ import lombok.Setter;
 @Setter
 public class RealtimeWeatherDTO {
 	// dùng hàm toString() của Location để map qua
+	// ko show field này khi null (dùng trong api của fullWeather)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String location;
 
 	@Range(min = -50, max = 50, message = "Temperature must be in the range of -50 to 50 Celsius degree")

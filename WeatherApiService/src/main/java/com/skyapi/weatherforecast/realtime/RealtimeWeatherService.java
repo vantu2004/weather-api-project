@@ -55,7 +55,13 @@ public class RealtimeWeatherService {
 			 * là cần cập nhật entity
 			 */
 			realtimeWeather.setLocationCode(locationCode);
-		} else {
+		}
+		/*
+		 * trường hợp realtimeWeather chưa tồn tại mà lưu trực tiếp realtimeWeather thì
+		 * Hibernate sẽ ko hiểu quan hệ One-To-One -> lỗi -> setRealtimeWeather() và lưu
+		 * location để tạo quan hệ cho Hibernate hiểu
+		 */
+		else {
 			location.setRealtimeWeather(realtimeWeather);
 			Location updatedLocation = this.locationRepository.save(location);
 
