@@ -105,4 +105,19 @@ public class Location {
 		return this.cityName + ", " + (this.regionName == null ? "" : this.regionName + ", ") + this.countryName;
 	}
 
+	// dùng cho updateLocation
+	public void copyFieldsFrom(Location locationInRequest) {
+		setCityName(locationInRequest.getCityName());
+		setRegionName(locationInRequest.getRegionName());
+		setCountryName(locationInRequest.getCountryName());
+		setCountryCode(locationInRequest.getCountryCode());
+		setEnabled(locationInRequest.isEnabled());
+	}
+
+	// dùng cho updateFullWeather
+	public void copyAllFieldsFrom(Location locationInRequest) {
+		this.copyFieldsFrom(locationInRequest);
+		setCode(locationInRequest.getCode());
+		setTrashed(locationInRequest.isTrashed());
+	}
 }

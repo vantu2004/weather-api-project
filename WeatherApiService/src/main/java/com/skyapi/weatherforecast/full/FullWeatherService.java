@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.skyapi.weatherforecast.AbstractLocationService;
 import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
@@ -12,12 +13,13 @@ import com.skyapi.weatherforecast.common.RealtimeWeather;
 import com.skyapi.weatherforecast.location.LocationNotFoundException;
 import com.skyapi.weatherforecast.location.LocationRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
-public class FullWeatherService {
-	private final LocationRepository locationRepository;
+public class FullWeatherService extends AbstractLocationService {
+
+	public FullWeatherService(LocationRepository locationRepository) {
+		super();
+		this.locationRepository = locationRepository;
+	}
 
 	public Location getLocationByIpAddress(Location locationFromIp) {
 		String countryCode = locationFromIp.getCountryCode();
@@ -26,15 +28,6 @@ public class FullWeatherService {
 		Location location = this.locationRepository.findByCountryCodeAndCityName(countryCode, cityName);
 		if (location == null) {
 			throw new LocationNotFoundException(countryCode, cityName);
-		}
-
-		return location;
-	}
-
-	public Location getLocationByLocationCode(String locationCode) {
-		Location location = this.locationRepository.findByCode(locationCode);
-		if (location == null) {
-			throw new LocationNotFoundException(locationCode);
 		}
 
 		return location;
@@ -69,19 +62,16 @@ public class FullWeatherService {
 			realtimeWeather.setLocationCode(locationCode);
 		}
 
+		// set location cho các phần tử trong list hourlyWeather
 		List<HourlyWeather> hourlyWeathers = locationInRequest.getListHourlyWeather();
 		hourlyWeathers.forEach(hourlyWeather -> hourlyWeather.getId().setLocation(locationInDB));
 
+		// set location cho các phần tử trong list dai lyWeather
 		List<DailyWeather> dailyWeathers = locationInRequest.getListDailyWeathers();
 		dailyWeathers.forEach(dailyWeather -> dailyWeather.getId().setLocation(locationInDB));
 
-		locationInRequest.setCode(locationInDB.getCode());
-		locationInRequest.setCityName(locationInDB.getCityName());
-		locationInRequest.setRegionName(locationInDB.getRegionName());
-		locationInRequest.setCountryName(locationInDB.getCountryName());
-		locationInRequest.setCountryCode(locationInDB.getCountryCode());
-		locationInRequest.setEnabled(locationInDB.isEnabled());
-		locationInRequest.setTrashed(locationInDB.isTrashed());
+		// locationInRequest thiếu dữ liệu các field của Location nên cần copy từ db
+		locationInRequest.copyAllFieldsFrom(locationInDB);
 
 		return this.locationRepository.save(locationInRequest);
 	}

@@ -126,8 +126,7 @@ public class FullWeatherApiControllerTests {
 
 		LocationNotFoundException locationNotFoundException = new LocationNotFoundException(locationCode);
 
-		Mockito.when(this.fullWeatherService.getLocationByLocationCode(locationCode))
-				.thenThrow(locationNotFoundException);
+		Mockito.when(this.fullWeatherService.getLocationByCode(locationCode)).thenThrow(locationNotFoundException);
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
@@ -175,7 +174,7 @@ public class FullWeatherApiControllerTests {
 
 		location.setListHourlyWeather(List.of(hourlyForecast1, hourlyForecast2));
 
-		Mockito.when(this.fullWeatherService.getLocationByLocationCode(locationCode)).thenReturn(location);
+		Mockito.when(this.fullWeatherService.getLocationByCode(locationCode)).thenReturn(location);
 
 		String expectedLocation = location.toString();
 
