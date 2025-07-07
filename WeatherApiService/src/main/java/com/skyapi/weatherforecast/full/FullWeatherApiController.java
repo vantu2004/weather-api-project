@@ -25,6 +25,7 @@ public class FullWeatherApiController {
 	private final GeolocationService geolocationService;
 	private final FullWeatherService fullWeatherService;
 	private final ModelMapper modelMapper;
+	private final FullWeatherModelAssembler fullWeatherModelAssembler;
 
 	@GetMapping
 	public ResponseEntity<?> getFullWeatherByIPAddress(HttpServletRequest request) {
@@ -33,34 +34,40 @@ public class FullWeatherApiController {
 
 		Location location = this.fullWeatherService.getLocationByIpAddress(locationFromIp);
 
-		return ResponseEntity.ok(this.convertLocationEntityToFulWeatherDTO(location));
+		FullWeatherDTO fullWeatherDTO = this.convertLocationEntityToFullWeatherDTO(location);
+
+		return ResponseEntity.ok(this.fullWeatherModelAssembler.toModel(fullWeatherDTO));
 	}
 
 	@GetMapping("/{locationCode}")
 	public ResponseEntity<?> getFullWeatherByLocationCode(@PathVariable("locationCode") String locationCode) {
 		Location location = this.fullWeatherService.getLocationByCode(locationCode);
 
-		return ResponseEntity.ok(this.convertLocationEntityToFulWeatherDTO(location));
+		FullWeatherDTO fullWeatherDTO = this.convertLocationEntityToFullWeatherDTO(location);
+
+		return ResponseEntity.ok(this.fullWeatherModelAssembler.addLinksByLocation(locationCode, fullWeatherDTO));
 	}
 
 	@PutMapping("/{locationCode}")
 	public ResponseEntity<?> updateFullWeather(@PathVariable("locationCode") String locationCode,
-			@RequestBody @Valid FullWeatherDTO fullWeatherDTO) throws BadRequestException {
-		if (fullWeatherDTO.getListHourlyWeather().isEmpty()) {
+			@RequestBody @Valid FullWeatherDTO fullWeatherDTOInRequest) throws BadRequestException {
+		if (fullWeatherDTOInRequest.getListHourlyWeather().isEmpty()) {
 			throw new BadRequestException("Hourly weather data cannot be empty.");
 		}
 
-		if (fullWeatherDTO.getListDailyWeathers().isEmpty()) {
+		if (fullWeatherDTOInRequest.getListDailyWeathers().isEmpty()) {
 			throw new BadRequestException("Daily weather data cannot be empty.");
 		}
 
-		Location location = this.convertFullWeatherDTOToLocationEntity(fullWeatherDTO);
+		Location location = this.convertFullWeatherDTOToLocationEntity(fullWeatherDTOInRequest);
 		Location updatedLocation = this.fullWeatherService.updateFullWeather(locationCode, location);
 
-		return ResponseEntity.ok(this.convertLocationEntityToFulWeatherDTO(updatedLocation));
+		FullWeatherDTO fullWeatherDTO = this.convertLocationEntityToFullWeatherDTO(updatedLocation);
+
+		return ResponseEntity.ok(this.fullWeatherModelAssembler.addLinksByLocation(locationCode, fullWeatherDTO));
 	}
 
-	private FullWeatherDTO convertLocationEntityToFulWeatherDTO(Location location) {
+	private FullWeatherDTO convertLocationEntityToFullWeatherDTO(Location location) {
 		FullWeatherDTO fullWeatherDTO = this.modelMapper.map(location, FullWeatherDTO.class);
 
 		/*
@@ -76,4 +83,5 @@ public class FullWeatherApiController {
 	private Location convertFullWeatherDTOToLocationEntity(FullWeatherDTO fullWeatherDTO) {
 		return this.modelMapper.map(fullWeatherDTO, Location.class);
 	}
+
 }

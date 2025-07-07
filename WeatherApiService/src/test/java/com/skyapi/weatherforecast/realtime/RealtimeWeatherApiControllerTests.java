@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,6 +27,8 @@ import com.skyapi.weatherforecast.location.LocationNotFoundException;
 @WebMvcTest(RealtimeWeatherApiController.class)
 public class RealtimeWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/realtime";
+	private static final String REQUEST_CONTENT_TYPE = "application/json";
+	private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
 
 	// giả lập HTTP request đến controller
 	@Autowired
@@ -81,7 +84,12 @@ public class RealtimeWeatherApiControllerTests {
 		Mockito.when(this.realtimeWeatherService.getRealtimeWeatherByCountryCodeAndCityName(location))
 				.thenReturn(realtimeWeather);
 
-		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isOk()).andDo(print());
+		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isOk())
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime")))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly")))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily")))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full"))).andDo(print());
 	}
 
 	@Test
@@ -98,8 +106,10 @@ public class RealtimeWeatherApiControllerTests {
 
 	@Test
 	public void testGetRealtimeWeatherByLocationCodeShouldReturn200Ok() throws Exception {
+		String locationCode = "HCM_VN";
+
 		Location location = new Location();
-		location.setCode("HCM_VN");
+		location.setCode(locationCode);
 		location.setCityName("Ho Chi Minh City");
 		location.setRegionName("Southern Vietnam");
 		location.setCountryName("Vietnam");
@@ -122,7 +132,13 @@ public class RealtimeWeatherApiControllerTests {
 
 		String requestUri = END_POINT_PATH + "/" + location.getCode();
 
-		mockMvc.perform(get(requestUri)).andExpect(status().isOk()).andDo(print());
+		mockMvc.perform(get(requestUri)).andExpect(status().isOk())
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 
 	@Test
@@ -139,7 +155,7 @@ public class RealtimeWeatherApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(realtimeWeatherDTO);
 
-		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent))
+		mockMvc.perform(put(requestUri).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print());
 	}
 
@@ -169,15 +185,17 @@ public class RealtimeWeatherApiControllerTests {
 		 * lúc này đã khác địa chỉ ô nhớ nên xảy ra lỗi vì thế cần hàm hashCode và equal
 		 * để so sánh
 		 */
-		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent))
+		mockMvc.perform(put(requestUri).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
 
 	@Test
 	public void testUpdateRealtimeWeatherShouldReturn200Ok() throws Exception {
+		String locationCode = "HCM_VN";
+
 		Location location = new Location();
-		location.setCode("HCM_VN");
+		location.setCode(locationCode);
 		location.setCityName("Ho Chi Minh City");
 		location.setRegionName("Southern Vietnam");
 		location.setCountryName("Vietnam");
@@ -216,7 +234,13 @@ public class RealtimeWeatherApiControllerTests {
 
 		String expectedLocation = location.toString();
 
-		mockMvc.perform(put(requestUri).contentType("application/json").content(bodyContent)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
+		mockMvc.perform(put(requestUri).content(bodyContent).contentType(REQUEST_CONTENT_TYPE))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 }

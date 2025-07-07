@@ -1,10 +1,14 @@
 package com.skyapi.weatherforecast.daily;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.skyapi.weatherforecast.GeolocationService;
 import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.Location;
+import com.skyapi.weatherforecast.full.FullWeatherApiController;
+import com.skyapi.weatherforecast.hourly.HourlyWeatherApiController;
+import com.skyapi.weatherforecast.realtime.RealtimeWeatherApiController;
 import com.skyapi.weatherforecast.util.CommonUtility;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +50,9 @@ public class DailyWeatherApiController {
 			return ResponseEntity.noContent().build();
 		}
 
-		return ResponseEntity.ok().body(convertListDailyWeatherToDTO(dailyWeathers));
+		DailyWeatherListDTO dailyWeatherListDTO = this.convertListDailyWeatherToDTO(dailyWeathers);
+
+		return ResponseEntity.ok().body(this.addLinksByIp(dailyWeatherListDTO));
 	}
 
 	@GetMapping("/{locationCode}")
@@ -54,7 +63,9 @@ public class DailyWeatherApiController {
 			return ResponseEntity.noContent().build();
 		}
 
-		return ResponseEntity.ok().body(convertListDailyWeatherToDTO(dailyWeathers));
+		DailyWeatherListDTO dailyWeatherListDTO = this.convertListDailyWeatherToDTO(dailyWeathers);
+
+		return ResponseEntity.ok().body(this.addLinksByLocation(locationCode, dailyWeatherListDTO));
 	}
 
 	@PutMapping("/{locationCode}")
@@ -70,7 +81,9 @@ public class DailyWeatherApiController {
 		List<DailyWeather> updatedDailyWeathers = this.dailyWeatherService.updateDailyWeather(locationCode,
 				dailyWeathers);
 
-		return ResponseEntity.ok().body(this.convertListDailyWeatherToDTO(updatedDailyWeathers));
+		DailyWeatherListDTO dailyWeatherListDTO = this.convertListDailyWeatherToDTO(updatedDailyWeathers);
+
+		return ResponseEntity.ok().body(this.addLinksByLocation(locationCode, dailyWeatherListDTO));
 	}
 
 	private DailyWeatherListDTO convertListDailyWeatherToDTO(List<DailyWeather> dailyWeathers) {
@@ -100,5 +113,46 @@ public class DailyWeatherApiController {
 		});
 
 		return dailyWeathers;
+	}
+
+	/*
+	 * Entity extends từ RepresentationModel nên có add() và List<Link> links, mục
+	 * đích là bọc Object + links vào 1 object thay vì cứ cho các object extents
+	 * riêng RepresentationModel
+	 */
+	private EntityModel<DailyWeatherListDTO> addLinksByIp(DailyWeatherListDTO dailyWeatherListDTO) {
+		/*
+		 * hàm of() giúp tạo EntityModel 2 thành phần là object được truyền vào và links
+		 * từ RepresentationModel
+		 */
+		EntityModel<DailyWeatherListDTO> entityModel = EntityModel.of(dailyWeatherListDTO);
+
+		entityModel.add(
+				linkTo(methodOn(DailyWeatherApiController.class).listDailyForecastByIPAddress(null)).withSelfRel());
+		entityModel.add(linkTo(methodOn(HourlyWeatherApiController.class).listHourlyForecastByIPAddress(null))
+				.withRel("hourly_forecast"));
+		entityModel.add(linkTo(methodOn(RealtimeWeatherApiController.class).getRealtimeByIPAddress(null))
+				.withRel("realtime_weather"));
+		entityModel.add(linkTo(methodOn(FullWeatherApiController.class).getFullWeatherByIPAddress(null))
+				.withRel("full_forecast"));
+
+		return entityModel;
+	}
+
+	private EntityModel<DailyWeatherListDTO> addLinksByLocation(String locationCode,
+			DailyWeatherListDTO dailyWeatherListDTO) {
+		EntityModel<DailyWeatherListDTO> entityModel = EntityModel.of(dailyWeatherListDTO);
+
+		entityModel.add(linkTo(methodOn(DailyWeatherApiController.class).getDailyForecastByLocationCode(locationCode))
+				.withSelfRel());
+		entityModel.add(
+				linkTo(methodOn(HourlyWeatherApiController.class).listHourlyForecastByLocationCode(locationCode, null))
+						.withRel("hourly_forecast"));
+		entityModel.add(linkTo(methodOn(RealtimeWeatherApiController.class).getRealtimeByLocationCode(locationCode))
+				.withRel("realtime_weather"));
+		entityModel.add(linkTo(methodOn(FullWeatherApiController.class).getFullWeatherByLocationCode(locationCode))
+				.withRel("full_forecast"));
+
+		return entityModel;
 	}
 }

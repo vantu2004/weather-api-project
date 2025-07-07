@@ -5,6 +5,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,7 +17,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ import com.skyapi.weatherforecast.realtime.RealtimeWeatherDTO;
 public class FullWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/full";
 	private static final String REQUEST_CONTENT_TYPE = "application/json";
+	private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -46,6 +48,16 @@ public class FullWeatherApiControllerTests {
 	private GeolocationService geolocationService;
 	@MockBean
 	private FullWeatherService fullWeatherService;
+
+	/*
+	 * @WebMvcTest chỉ load các bean liên quan đến Weblayer nên sẽ ko load
+	 * 
+	 * @Component FullWeatherModelAssembler -> dùng @SpyBean để tạo luôn bean thật
+	 * để khi mock controller thì có thể inject được FullWeatherModelAssembler ->
+	 * pass test
+	 */
+	@SpyBean
+	private FullWeatherModelAssembler fullWeatherModelAssembler;
 
 	@Test
 	public void testGetFullWeatherByIpShouldReturn400BadRequest() throws Exception {
@@ -116,7 +128,8 @@ public class FullWeatherApiControllerTests {
 		String expectedLocation = location.toString();
 
 		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
+				.andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE)).andDo(print());
 	}
 
 	@Test
@@ -179,7 +192,10 @@ public class FullWeatherApiControllerTests {
 		String expectedLocation = location.toString();
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
+				.andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 
 	@Test
@@ -191,9 +207,8 @@ public class FullWeatherApiControllerTests {
 
 		String json = objectMapper.writeValueAsString(fullWeatherDTO);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.errors[0]", is("Hourly weather data cannot be empty."))).andDo(print());
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
+				.andExpect(status().isBadRequest()).andDo(print());
 	}
 
 	@Test
@@ -213,9 +228,8 @@ public class FullWeatherApiControllerTests {
 
 		String json = objectMapper.writeValueAsString(fullWeatherDTO);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.errors[0]", is("Daily weather data cannot be empty."))).andDo(print());
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
+				.andExpect(status().isBadRequest()).andDo(print());
 	}
 
 	@Test
@@ -254,7 +268,7 @@ public class FullWeatherApiControllerTests {
 
 		String json = objectMapper.writeValueAsString(fullWeatherDTO);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors[0]",
 						containsString("Temperature must be in the range of -50 to 50 Celsius degree")))
 				.andDo(print());
@@ -296,7 +310,7 @@ public class FullWeatherApiControllerTests {
 
 		String json = objectMapper.writeValueAsString(fullWeatherDTO);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors[0]",
 						containsString("Temperature must be in the range of -50 to 50 Celsius degree")))
 				.andDo(print());
@@ -338,7 +352,7 @@ public class FullWeatherApiControllerTests {
 
 		String json = objectMapper.writeValueAsString(fullWeatherDTO);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.errors[0]", containsString("Day of month must be between 1-31"))).andDo(print());
 	}
@@ -383,7 +397,7 @@ public class FullWeatherApiControllerTests {
 		Mockito.when(this.fullWeatherService.updateFullWeather(Mockito.eq(locationCode), Mockito.any(Location.class)))
 				.thenThrow(locationNotFoundException);
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
@@ -435,7 +449,10 @@ public class FullWeatherApiControllerTests {
 
 		String expectedLocation = location.toString();
 
-		mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
+		mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(json)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 }

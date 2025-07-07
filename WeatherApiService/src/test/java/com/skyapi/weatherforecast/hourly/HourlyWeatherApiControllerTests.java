@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +32,7 @@ import com.skyapi.weatherforecast.location.LocationNotFoundException;
 public class HourlyWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/hourly";
 	private static final String X_CURRENT_HOUR = "X-Current-Hour";
+	private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -98,7 +100,12 @@ public class HourlyWeatherApiControllerTests {
 		String expectedLocation = location.toString();
 
 		mockMvc.perform(get(END_POINT_PATH).header(X_CURRENT_HOUR, String.valueOf(currentHour)))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(expectedLocation))).andDo(print());
+				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly")))
+				.andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime")))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily")))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full"))).andDo(print());
 	}
 
 	@Test
@@ -135,7 +142,8 @@ public class HourlyWeatherApiControllerTests {
 	@Test
 	public void testListHourlyForecastByLocationCodeShouldReturn200Ok() throws Exception {
 		int currentHour = 10;
-		Location location = Location.builder().code("HCM_VN").build();
+		String locationCode = "HCM_VN";
+		Location location = Location.builder().code(locationCode).build();
 
 		HourlyWeather hw1 = HourlyWeather.builder().id(new HourlyWeatherId(10, location)).status("Sunny")
 				.temperature(32).build();
@@ -148,7 +156,14 @@ public class HourlyWeatherApiControllerTests {
 
 		mockMvc.perform(get(END_POINT_PATH + "/HCM_VN").header("X-Current-Hour", String.valueOf(currentHour)))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.hourly_forecast[0].status", is("Sunny")))
-				.andExpect(jsonPath("$.hourly_forecast[1].status", is("Rainy"))).andDo(print());
+				.andExpect(jsonPath("$.hourly_forecast[1].status", is("Rainy")))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(
+						jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 
 	@Test
@@ -201,11 +216,11 @@ public class HourlyWeatherApiControllerTests {
 
 	@Test
 	public void testUpdateHourlyWeatherShouldReturn200Ok() throws Exception {
-		String locationCode = "ABC";
+		String locationCode = "HN_VN";
 		String uri = END_POINT_PATH + "/" + locationCode;
 
 		Location location = new Location();
-		location.setCode("HN_VN");
+		location.setCode(locationCode);
 		location.setCityName("Hanoi");
 		location.setRegionName("Northern Vietnam");
 		location.setCountryName("Vietnam");
@@ -213,8 +228,11 @@ public class HourlyWeatherApiControllerTests {
 
 		HourlyWeather hourlyWeather1 = new HourlyWeather(new HourlyWeatherId(10, location), 10, 10, "Rainy");
 		HourlyWeather hourlyWeather2 = new HourlyWeather(new HourlyWeatherId(12, location), 12, 12, "Rainy");
-
 		List<HourlyWeather> hourlyWeathers = List.of(hourlyWeather1, hourlyWeather2);
+
+		HourlyWeatherDTO hourlyWeatherDTO1 = new HourlyWeatherDTO(10, 10, 10, "Rainy");
+		HourlyWeatherDTO hourlyWeatherDTO2 = new HourlyWeatherDTO(12, 12, 12, "Rainy");
+		List<HourlyWeatherDTO> hourlyWeatherDTOs = List.of(hourlyWeatherDTO1, hourlyWeatherDTO2);
 
 		/*
 		 * Mockito yêu cầu các tham số cùng kiểu (cùng là giá trị hoặc cùng là matcher
@@ -223,9 +241,16 @@ public class HourlyWeatherApiControllerTests {
 		Mockito.when(this.hourlyWeatherService.updateHourlyWeather(Mockito.eq(locationCode), Mockito.anyList()))
 				.thenReturn(hourlyWeathers);
 
-		String requestBody = objectMapper.writeValueAsString(hourlyWeathers);
+		String requestBody = objectMapper.writeValueAsString(hourlyWeatherDTOs);
 
 		mockMvc.perform(put(uri).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(location.toString()))).andDo(print());
+				.andExpect(status().isOk()).andExpect(jsonPath("$.location", is(location.toString())))
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(
+						jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 }

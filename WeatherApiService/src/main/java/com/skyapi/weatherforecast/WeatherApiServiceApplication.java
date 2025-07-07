@@ -6,6 +6,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
@@ -65,6 +68,26 @@ public class WeatherApiServiceApplication {
 		modelMapper.typeMap(HourlyWeatherDTO.class, HourlyWeather.class).addMapping(
 				hourlyWeatherDTO -> hourlyWeatherDTO.getHourOfDay(),
 				(hourlyWeather, value) -> hourlyWeather.getId().setHourOfDay(value == null ? 0 : (int) value));
+	}
+
+	/*
+	 * ObjectMapper là lớp chính để convert json-object/object-json, việc cấu hình
+	 * bên dưới giúp format lại json, đổi tên field từ dạng camelCase sang snakeCase
+	 * (vẫn ưu tiên cho @JsonProperty trước) trong quá trình serialize từ
+	 * object-json
+	 * 
+	 * việc cấu hình trong main này thì bên test có thể dùng được, còn nếu cấu hình
+	 * trong class khác thì test ko dùng được do ObjectMapper ko
+	 * load @Component, @Configuration, @Service, @Repository… trừ khi cấu hình cụ
+	 * thể
+	 */
+	@Bean
+	public ObjectMapper objectMapper() {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
+		return objectMapper;
 	}
 
 	public static void main(String[] args) {

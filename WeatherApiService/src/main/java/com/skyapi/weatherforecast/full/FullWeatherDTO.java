@@ -25,7 +25,6 @@ public class FullWeatherDTO {
 	 * trả về true thì ẩn, false thì hiện
 	 */
 	@JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = RealtimeWeatherFieldFilter.class)
-	@JsonProperty("realtime_weather")
 	/*
 	 * @Valid bên controller dò các field trong này -> dùng tiếp @Valid để kích hoạt
 	 * validate trong class này

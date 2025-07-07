@@ -3,7 +3,6 @@ package com.skyapi.weatherforecast.location;
 import org.hibernate.validator.constraints.Length;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.validation.constraints.NotNull;
@@ -22,23 +21,19 @@ public class LocationDTO {
 
 	@NotNull(message = "City name cannot be null")
 	@Length(min = 3, max = 128, message = "City name must have 3-128 characters")
-	@JsonProperty("city_name")
 	private String cityName;
 
 	@Length(min = 3, max = 128, message = "Region name must have 3-128 characters")
 	// trường hợp regionName null thì ko in cùng json
 	@JsonInclude(JsonInclude.Include.NON_NULL)
-	@JsonProperty("region_name")
 	private String regionName;
 
 	@NotNull(message = "Country name cannot be null")
 	@Length(min = 3, max = 64, message = "Country name must have 3-64 characters")
-	@JsonProperty("country_name")
 	private String countryName;
 
 	@NotNull(message = "Country code cannot be null")
 	@Length(min = 2, max = 2, message = "Country code must have 2 characters")
-	@JsonProperty("country_code")
 	private String countryCode;
 
 	private boolean enabled;
