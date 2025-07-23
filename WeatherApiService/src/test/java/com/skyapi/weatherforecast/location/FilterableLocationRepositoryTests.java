@@ -40,6 +40,15 @@ public class FilterableLocationRepositoryTests {
 
 		List<Location> locations = page.getContent();
 
+		/*
+		 * đảm bảo tổng số row (ko phân trang) > tổng số row (tính đến hết trang hiện
+		 * tại)
+		 */
+		System.out.println("OFFSET " + pageable.getOffset());
+		System.out.println("ELEMENTS_IN_PAGE " + (pageable.getOffset() + locations.size()));
+		System.out.println("TOTAL_ELEMENTS " + page.getTotalElements());
+		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
+
 		assertThat(locations).isNotEmpty();
 		assertThat(locations.size()).isEqualTo(pageSize);
 		assertThat(locations).isSortedAccordingTo(new Comparator<Location>() {
@@ -65,6 +74,11 @@ public class FilterableLocationRepositoryTests {
 		Page<Location> page = this.locationRepository.listWithFilter(pageable, Collections.emptyMap());
 
 		List<Location> locations = page.getContent();
+
+		System.out.println("OFFSET " + pageable.getOffset());
+		System.out.println("ELEMENTS_IN_PAGE " + (pageable.getOffset() + locations.size()));
+		System.out.println("TOTAL_ELEMENTS " + page.getTotalElements());
+		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
 
 		assertThat(locations).isNotEmpty();
 		assertThat(locations.size()).isEqualTo(pageSize);
@@ -95,6 +109,11 @@ public class FilterableLocationRepositoryTests {
 		Page<Location> page = this.locationRepository.listWithFilter(pageable, filterFields);
 
 		List<Location> locations = page.getContent();
+
+		System.out.println("OFFSET " + pageable.getOffset());
+		System.out.println("ELEMENTS_IN_PAGE " + (pageable.getOffset() + locations.size()));
+		System.out.println("TOTAL_ELEMENTS " + page.getTotalElements());
+		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
 
 		assertThat(locations).isNotEmpty();
 		assertThat(locations.size()).isLessThanOrEqualTo(pageSize);
@@ -129,6 +148,11 @@ public class FilterableLocationRepositoryTests {
 
 		List<Location> locations = page.getContent();
 
+		System.out.println("OFFSET " + pageable.getOffset());
+		System.out.println("ELEMENTS_IN_PAGE " + (pageable.getOffset() + locations.size()));
+		System.out.println("TOTAL_ELEMENTS " + page.getTotalElements());
+		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
+		
 		assertThat(locations).isNotEmpty();
 		assertThat(locations.size()).isLessThanOrEqualTo(pageSize);
 		assertThat(locations).isSortedAccordingTo(new Comparator<Location>() {

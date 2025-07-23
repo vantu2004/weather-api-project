@@ -28,6 +28,7 @@ public class FilterableLocationRepositoryImpl implements FilterableLocationRepos
 	@Autowired
 	private EntityManager entityManager;
 
+	// hàm này phân trang kết quả theo điều kiện nên phải làm thủ công
 	@Override
 	public Page<Location> listWithFilter(Pageable pageable, Map<String, Object> filterFields) {
 		CriteriaBuilder criteriaBuilder = this.entityManager.getCriteriaBuilder();
@@ -35,18 +36,7 @@ public class FilterableLocationRepositoryImpl implements FilterableLocationRepos
 
 		Root<Location> root = criteriaQuery.from(Location.class);
 
-		List<Predicate> predicates = new ArrayList<>();
-
-		// Duyệt từng cặp (fieldName, value) trong filterFields
-		for (Map.Entry<String, Object> entry : filterFields.entrySet()) {
-			String fieldName = entry.getKey();
-			Object fieldValue = entry.getValue();
-
-			if (fieldValue != null) {
-				predicates.add(criteriaBuilder.equal(root.get(fieldName), fieldValue));
-			}
-		}
-
+		List<Predicate> predicates = this.createPredicates(filterFields, criteriaBuilder, root);
 		if (!predicates.isEmpty()) {
 			/*
 			 * new Predicate[0] tự động tạo mảng tương ứng và ko cần chỉ định số phần tử
@@ -96,9 +86,53 @@ public class FilterableLocationRepositoryImpl implements FilterableLocationRepos
 		typedQuery.setMaxResults(pageable.getPageSize());
 
 		List<Location> locations = typedQuery.getResultList();
-		int totalRows = 0;
+
+		/*
+		 * totalRows <=> totalElements, phục vụ cho hàm getTotalElements(),
+		 * getTotalPages(),... trong PageImpl
+		 */
+		long totalRows = this.getTotalRows(filterFields);
 
 		return new PageImpl<Location>(locations, pageable, totalRows);
 	}
 
+	private List<Predicate> createPredicates(Map<String, Object> filterFields, CriteriaBuilder criteriaBuilder,
+			Root<Location> root) {
+		List<Predicate> predicates = new ArrayList<>();
+
+		// Duyệt từng cặp (fieldName, value) trong filterFields
+		for (Map.Entry<String, Object> entry : filterFields.entrySet()) {
+			String fieldName = entry.getKey();
+			Object fieldValue = entry.getValue();
+
+			if (fieldValue != null) {
+				predicates.add(criteriaBuilder.equal(root.get(fieldName), fieldValue));
+			}
+		}
+
+		return predicates;
+	}
+
+	/*
+	 * dựa vào filterFields để đếm số row trong bảng Location thỏa điều kiện bộ lọc
+	 * <=> đếm totalElements
+	 */
+	private long getTotalRows(Map<String, Object> filterFields) {
+		CriteriaBuilder criteriaBuilder = this.entityManager.getCriteriaBuilder();
+		CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+
+		Root<Location> root = criteriaQuery.from(Location.class);
+
+		criteriaQuery.select(criteriaBuilder.count(root));
+
+		List<Predicate> predicates = createPredicates(filterFields, criteriaBuilder, root);
+		if (!predicates.isEmpty()) {
+			criteriaQuery.where(predicates.toArray(new Predicate[0]));
+		}
+
+		TypedQuery<Long> typedQuery = this.entityManager.createQuery(criteriaQuery);
+
+		return typedQuery.getSingleResult();
+
+	}
 }
