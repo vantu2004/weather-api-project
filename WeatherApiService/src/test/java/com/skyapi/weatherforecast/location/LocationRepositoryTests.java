@@ -5,11 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Date;
 import java.util.List;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 
 import com.skyapi.weatherforecast.common.DailyWeather;
@@ -42,12 +47,54 @@ public class LocationRepositoryTests {
 	}
 
 	@Test
+	@Disabled
 	public void testGetAllLocationUnTrashed() {
 		List<Location> locations = this.locationRepository.findAllUnTrashed();
 
 		assertThat(locations).isNotEmpty();
 
 		locations.forEach(System.out::println);
+	}
+
+	@Test
+	public void testGetLocationFirstPage() {
+		int pageNum = 0;
+		int pageSize = 5;
+
+		Pageable pageable = PageRequest.of(pageNum, pageSize);
+		Page<Location> page = this.locationRepository.findAllUnTrashed(pageable);
+
+		assertThat(page).size().isEqualTo(5);
+
+		page.forEach(System.out::println);
+	}
+
+	@Test
+	public void testGetLocationNoContent() {
+		int pageNum = 10;
+		int pageSize = 5;
+
+		Pageable pageable = PageRequest.of(pageNum, pageSize);
+		Page<Location> page = this.locationRepository.findAllUnTrashed(pageable);
+
+		assertThat(page).isEmpty();
+
+		page.forEach(System.out::println);
+	}
+
+	@Test
+	public void testGetLocationFirstPageWithSort() {
+		int pageNum = 0;
+		int pageSize = 5;
+
+		Sort sort = Sort.by("code").ascending();
+
+		Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
+		Page<Location> page = this.locationRepository.findAllUnTrashed(pageable);
+
+		assertThat(page).size().isGreaterThanOrEqualTo(3).isLessThanOrEqualTo(5);
+
+		page.forEach(System.out::println);
 	}
 
 	@Test

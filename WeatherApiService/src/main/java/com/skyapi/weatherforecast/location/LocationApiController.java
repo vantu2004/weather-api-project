@@ -1,11 +1,22 @@
 package com.skyapi.weatherforecast.location;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.PagedModel.PageMetadata;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,18 +24,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skyapi.weatherforecast.common.Location;
+
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/v1/locations")
 @RequiredArgsConstructor
+@Validated
 public class LocationApiController {
 	private final LocationService locationService;
 	private final ModelMapper modelMapper;
+	private Map<String, String> propertyMap = Map.of("code", "code", "city_name", "cityName", "region_name",
+			"regionName", "country_code", "countryCode", "country_name", "countryName", "enabled", "enabled");
 
 	@PostMapping
 	public ResponseEntity<?> addLocation(@RequestBody @Valid LocationDTO locationDTO) {
@@ -44,14 +62,107 @@ public class LocationApiController {
 		return ResponseEntity.created(uri).body(this.convertLocationEntityToDTO(addedLocation));
 	}
 
-	@GetMapping
+	@Deprecated
 	public ResponseEntity<?> listAllLocations() {
 		List<Location> locations = this.locationService.getAllLocationUnTrashed();
 		if (locations.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
-
 		return ResponseEntity.ok(this.convertListLocationEntityToDTO(locations));
+	}
+
+	@GetMapping
+	public ResponseEntity<?> listAllLocations(
+			@RequestParam(value = "page", required = false, defaultValue = "1") @Min(value = 1) Integer page,
+			@RequestParam(value = "size", required = false, defaultValue = "5") @Min(value = 1) @Max(value = 20) Integer size,
+			@RequestParam(value = "sort", required = false, defaultValue = "code") String sort)
+			throws BadRequestException {
+
+		if (!propertyMap.containsKey(sort)) {
+			throw new BadRequestException("Invalid sort field: " + sort);
+		}
+
+		/*
+		 * đảm bảo biến sort truyền vào dạng snakecase (tương ứng tên field dạng json),
+		 * sau đó được convert sang camelcase (giống tên field trong entity) để có thể
+		 * sort (Hibernate chỉ hiểu khi sort <=> tên field trong entity)
+		 */
+		Page<Location> pageLocations = this.locationService.getAllLocationUnTrashed(page - 1, size,
+				propertyMap.get(sort));
+		List<Location> listLocations = pageLocations.getContent();
+
+		if (listLocations.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		List<LocationDTO> locationDTOs = this.convertListLocationEntityToDTO(listLocations);
+
+		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sort));
+	}
+
+	/*
+	 * vì trả về list nên buộc dùng CollectionModel để nhúng listDTO trong
+	 * _embedded, còn nếu trả về object đơn thì chỉ cần dùng EntityModel (extends từ
+	 * RepresentationModel) hoặc cho DTO extends trực tiếp từ RepresentationModel
+	 */
+	private CollectionModel<LocationDTO> addPageMetaDataAndLinksToCollection(Page<Location> pageLocations,
+			List<LocationDTO> locationDTOs, String sortField) throws BadRequestException {
+		// add _links cho riêng từng DTO
+		for (LocationDTO locationDTO : locationDTOs) {
+			locationDTO.add(
+					linkTo(methodOn(LocationApiController.class).getLocation(locationDTO.getCode())).withSelfRel());
+		}
+
+		int pageSize = pageLocations.getSize();
+
+		// pageNum + 1 vì index chạy từ 0
+		int pageNum = pageLocations.getNumber() + 1;
+		long totalElements = pageLocations.getTotalElements();
+		int totalPages = pageLocations.getTotalPages();
+
+		// PageMetaData chứa thông tin phân trang
+		PageMetadata pageMetadata = new PageMetadata(pageSize, pageNum, totalElements, totalPages);
+
+		/*
+		 * CollectionModel bọc ListDTO + _links, PageModel extends CollectionModel giúp
+		 * bọc thêm page -> đáng lẽ là trả về PagedModel nhưng trả về CollectionModel để
+		 * tăng tính trừu tượng, linh hoạt và tái sử dụng (vd: trả về
+		 * CollectionModel(listDTOs + _links) hoặc PagedModel(listDTOs + _links + page))
+		 * 
+		 * PagedModel kế thừa từ CollectionModel, theo tính đa hình, ta có thể khai báo
+		 * một biến có kiểu CollectionModel và gán cho nó một đối tượng thực sự là
+		 * PagedModel. Nhưng nếu muốn truy cập phương thức đặc trưng của PagedModel thì
+		 * phải ép kiểu
+		 * 
+		 * tính đa hình <=> 1 lớp có thể có nhiều hình thái (gồm chính nó hoặc các lớp
+		 * con)
+		 */
+		CollectionModel<LocationDTO> collectionModel = PagedModel.of(locationDTOs, pageMetadata);
+
+		// add _links cho collectionModel
+		collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum, pageSize, sortField))
+				.withSelfRel());
+
+		// nếu pageNum > 1 thì trả về firstLink và prevLink
+		if (pageNum > 1) {
+			collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(1, pageSize, sortField))
+					.withRel(IanaLinkRelations.FIRST));
+			collectionModel.add(
+					linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum - 1, pageSize, sortField))
+							.withRel(IanaLinkRelations.PREV));
+		}
+
+		// nếu vẫn còn trang tiếp theo thì thêm next và last
+		if (pageNum < pageLocations.getTotalPages()) {
+			collectionModel.add(
+					linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum + 1, pageSize, sortField))
+							.withRel(IanaLinkRelations.NEXT));
+			collectionModel
+					.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageLocations.getTotalPages(),
+							pageSize, sortField)).withRel(IanaLinkRelations.LAST));
+		}
+
+		return collectionModel;
 	}
 
 	@GetMapping("/{code}")
