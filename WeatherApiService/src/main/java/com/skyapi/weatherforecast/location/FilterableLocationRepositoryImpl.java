@@ -1,5 +1,6 @@
 package com.skyapi.weatherforecast.location;
 
+// Import a new class
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,9 @@ public class FilterableLocationRepositoryImpl implements FilterableLocationRepos
 				predicates.add(criteriaBuilder.equal(root.get(fieldName), fieldValue));
 			}
 		}
+
+		// Only show non-trashed locations
+		predicates.add(criteriaBuilder.isFalse(root.get("trashed")));
 
 		return predicates;
 	}

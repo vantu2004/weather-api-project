@@ -13,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Disabled;
@@ -99,16 +98,16 @@ public class LocationApiControllerTests {
 		 * giả định khi phương thức getAllLocationUnTrashed này đc gọi đến thì trả về
 		 * list rỗng
 		 */
-		Mockito.when(this.locationService.getAllLocationUnTrashed()).thenReturn(Collections.emptyList());
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(Page.empty());
 
 		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isNoContent()).andDo(print());
 	}
 
 	@Test
 	public void testGetLocationsByPageShouldReturn204NoContent() throws Exception {
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(Page.empty());
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(Page.empty());
 
 		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isNoContent()).andDo(print());
 	}
@@ -176,9 +175,8 @@ public class LocationApiControllerTests {
 
 		String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
 
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(pageLocations);
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(pageLocations);
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isOk())
 				.andExpect(content().contentType("application/hal+json"))
@@ -222,9 +220,8 @@ public class LocationApiControllerTests {
 		Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sort);
 		Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(page);
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(page);
 
 		String hostName = "http://localhost";
 		String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -259,9 +256,8 @@ public class LocationApiControllerTests {
 		Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sort);
 		Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(page);
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(page);
 
 		String hostName = "http://localhost";
 		String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -301,9 +297,8 @@ public class LocationApiControllerTests {
 
 		Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(page);
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(page);
 
 		String hostName = "http://localhost";
 		String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -344,9 +339,8 @@ public class LocationApiControllerTests {
 
 		Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-		Mockito.when(
-				this.locationService.getAllLocationUnTrashed(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString()))
-				.thenReturn(page);
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(page);
 
 		String hostName = "http://localhost";
 		String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -370,7 +364,8 @@ public class LocationApiControllerTests {
 
 		String requestURI = END_POINT_PATH + "?page=" + page + "&size=" + size + "&sort=" + sort;
 
-		Mockito.when(this.locationService.getAllLocationUnTrashed(page, size, sort)).thenReturn(Page.empty());
+		Mockito.when(this.locationService.getAllLocationUnTrashedWithFilter(Mockito.anyInt(), Mockito.anyInt(),
+				Mockito.anyString(), Mockito.anyMap())).thenReturn(Page.empty());
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isBadRequest()).andDo(print());
 	}

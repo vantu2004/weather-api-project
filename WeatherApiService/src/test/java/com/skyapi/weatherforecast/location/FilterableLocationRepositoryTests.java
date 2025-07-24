@@ -50,7 +50,7 @@ public class FilterableLocationRepositoryTests {
 		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
 
 		assertThat(locations).isNotEmpty();
-		assertThat(locations.size()).isEqualTo(pageSize);
+		assertThat(locations.size()).isLessThanOrEqualTo(pageSize);
 		assertThat(locations).isSortedAccordingTo(new Comparator<Location>() {
 
 			@Override
@@ -81,7 +81,7 @@ public class FilterableLocationRepositoryTests {
 		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(pageable.getOffset() + locations.size());
 
 		assertThat(locations).isNotEmpty();
-		assertThat(locations.size()).isEqualTo(pageSize);
+		assertThat(locations.size()).isLessThanOrEqualTo(pageSize);
 		assertThat(locations).isSortedAccordingTo(new Comparator<Location>() {
 
 			@Override
@@ -168,5 +168,6 @@ public class FilterableLocationRepositoryTests {
 		});
 
 		locations.forEach(System.out::println);
+
 	}
 }

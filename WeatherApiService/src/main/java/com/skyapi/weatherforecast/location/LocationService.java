@@ -1,6 +1,7 @@
 package com.skyapi.weatherforecast.location;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,11 +30,20 @@ public class LocationService extends AbstractLocationService {
 		return this.locationRepository.findAllUnTrashed();
 	}
 
+	@Deprecated
 	public Page<Location> getAllLocationUnTrashed(Integer pageNum, Integer pageSize, String sortField) {
 		Sort sort = Sort.by(sortField).ascending();
 		Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
 
 		return this.locationRepository.findAllUnTrashed(pageable);
+	}
+
+	public Page<Location> getAllLocationUnTrashedWithFilter(Integer pageNum, Integer pageSize, String sortField,
+			Map<String, Object> filterFields) {
+		Sort sort = Sort.by(sortField).ascending();
+		Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
+
+		return this.locationRepository.listWithFilter(pageable, filterFields);
 	}
 
 	public Location updateLocation(Location locationInRequest) {

@@ -19,6 +19,7 @@ public interface LocationRepository extends JpaRepository<Location, String>,
 	@Query("SELECT l FROM Location l WHERE l.trashed = false")
 	List<Location> findAllUnTrashed();
 
+	@Deprecated
 	@Query("SELECT l FROM Location l WHERE l.trashed = false")
 	public Page<Location> findAllUnTrashed(Pageable pageable);
 

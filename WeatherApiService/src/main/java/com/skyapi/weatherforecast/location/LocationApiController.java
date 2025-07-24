@@ -4,6 +4,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,11 +76,26 @@ public class LocationApiController {
 	public ResponseEntity<?> listAllLocations(
 			@RequestParam(value = "page", required = false, defaultValue = "1") @Min(value = 1) Integer page,
 			@RequestParam(value = "size", required = false, defaultValue = "5") @Min(value = 1) @Max(value = 20) Integer size,
-			@RequestParam(value = "sort", required = false, defaultValue = "code") String sort)
+			@RequestParam(value = "sort", required = false, defaultValue = "code") String sort,
+			@RequestParam(value = "enabled", required = false, defaultValue = "") String enabled,
+			@RequestParam(value = "region_name", required = false, defaultValue = "") String regionName,
+			@RequestParam(value = "country_code", required = false, defaultValue = "") String countryCode)
 			throws BadRequestException {
 
 		if (!propertyMap.containsKey(sort)) {
 			throw new BadRequestException("Invalid sort field: " + sort);
+		}
+
+		// tạo map các field được lọc
+		Map<String, Object> filterFields = new HashMap<String, Object>();
+		if (!"".equals(enabled)) {
+			filterFields.put("enabled", Boolean.parseBoolean(enabled));
+		}
+		if (!"".equals(regionName)) {
+			filterFields.put("regionName", regionName);
+		}
+		if (!"".equals(countryCode)) {
+			filterFields.put("countryCode", countryCode);
 		}
 
 		/*
@@ -87,17 +103,18 @@ public class LocationApiController {
 		 * sau đó được convert sang camelcase (giống tên field trong entity) để có thể
 		 * sort (Hibernate chỉ hiểu khi sort <=> tên field trong entity)
 		 */
-		Page<Location> pageLocations = this.locationService.getAllLocationUnTrashed(page - 1, size,
-				propertyMap.get(sort));
+		Page<Location> pageLocations = this.locationService.getAllLocationUnTrashedWithFilter(page - 1, size,
+				propertyMap.get(sort), filterFields);
 		List<Location> listLocations = pageLocations.getContent();
 
 		if (listLocations.isEmpty()) {
 			return ResponseEntity.noContent().build();
-		}
+		}	
 
 		List<LocationDTO> locationDTOs = this.convertListLocationEntityToDTO(listLocations);
 
-		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sort));
+		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sort, enabled,
+				regionName, countryCode));
 	}
 
 	/*
@@ -106,7 +123,12 @@ public class LocationApiController {
 	 * RepresentationModel) hoặc cho DTO extends trực tiếp từ RepresentationModel
 	 */
 	private CollectionModel<LocationDTO> addPageMetaDataAndLinksToCollection(Page<Location> pageLocations,
-			List<LocationDTO> locationDTOs, String sortField) throws BadRequestException {
+			List<LocationDTO> locationDTOs, String sortField, String enabled, String regionName, String countryCode)
+			throws BadRequestException {
+		String actualEnabled = "".equals(enabled) ? null : enabled;
+		String actualRegionName = "".equals(regionName) ? null : regionName;
+		String actualCountryCode = "".equals(countryCode) ? null : countryCode;
+
 		// add _links cho riêng từng DTO
 		for (LocationDTO locationDTO : locationDTOs) {
 			locationDTO.add(
@@ -140,26 +162,25 @@ public class LocationApiController {
 		CollectionModel<LocationDTO> collectionModel = PagedModel.of(locationDTOs, pageMetadata);
 
 		// add _links cho collectionModel
-		collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum, pageSize, sortField))
-				.withSelfRel());
+		collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum, pageSize, sortField,
+				actualEnabled, actualRegionName, actualCountryCode)).withSelfRel());
 
 		// nếu pageNum > 1 thì trả về firstLink và prevLink
 		if (pageNum > 1) {
-			collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(1, pageSize, sortField))
-					.withRel(IanaLinkRelations.FIRST));
-			collectionModel.add(
-					linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum - 1, pageSize, sortField))
-							.withRel(IanaLinkRelations.PREV));
+			collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(1, pageSize, sortField,
+					actualEnabled, actualRegionName, actualCountryCode)).withRel(IanaLinkRelations.FIRST));
+			collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum - 1, pageSize,
+					sortField, actualEnabled, actualRegionName, actualCountryCode)).withRel(IanaLinkRelations.PREV));
 		}
 
 		// nếu vẫn còn trang tiếp theo thì thêm next và last
 		if (pageNum < pageLocations.getTotalPages()) {
-			collectionModel.add(
-					linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum + 1, pageSize, sortField))
-							.withRel(IanaLinkRelations.NEXT));
+			collectionModel.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageNum + 1, pageSize,
+					sortField, actualEnabled, actualRegionName, actualCountryCode)).withRel(IanaLinkRelations.NEXT));
 			collectionModel
 					.add(linkTo(methodOn(LocationApiController.class).listAllLocations(pageLocations.getTotalPages(),
-							pageSize, sortField)).withRel(IanaLinkRelations.LAST));
+							pageSize, sortField, actualEnabled, actualRegionName, actualCountryCode))
+							.withRel(IanaLinkRelations.LAST));
 		}
 
 		return collectionModel;
