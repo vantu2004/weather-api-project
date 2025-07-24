@@ -35,6 +35,7 @@ import com.skyapi.weatherforecast.common.Location;
 // chỉ test tầng controller
 @WebMvcTest(LocationApiController.class)
 public class LocationApiControllerTests {
+	private static final String REQUEST_CONTENT_TYPE = "application/json";
 	private static final String END_POINT_PATH = "/v1/locations";
 	private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
 
@@ -52,14 +53,16 @@ public class LocationApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(location);
 
-		mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
+		mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print());
 	}
 
 	@Test
 	public void testAddShouldReturn201Created() throws Exception {
+		String locationCode = "HCM_VN";
+
 		Location location = new Location();
-		location.setCode("HCM_VN");
+		location.setCode(locationCode);
 		location.setCityName("Ho Chi Minh City");
 		location.setRegionName("Southern Vietnam");
 		location.setCountryName("Vietnam");
@@ -82,8 +85,14 @@ public class LocationApiControllerTests {
 		 * nhận vào tham số là location gốc, 2 location lúc này đã khác địa chỉ ô nhớ
 		 * nên xảy ra lỗi vì thế cần hàm hashCode và equal để so sánh
 		 */
-		mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
-				.andExpect(status().isCreated()).andDo(print());
+		mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
+				.andExpect(status().isCreated()).andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + locationCode)))
+				.andExpect(jsonPath("$._links.realtime.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 
 	@Test
@@ -393,8 +402,8 @@ public class LocationApiControllerTests {
 
 	@Test
 	public void testGetLocationShouldReturn200Ok() throws Exception {
-		String code = "'HCM_VN'";
-		String requestUri = END_POINT_PATH + "/" + code;
+		String locationCode = "HCM_VN";
+		String requestUri = END_POINT_PATH + "/" + locationCode;
 
 		Location location = new Location();
 		location.setCode("HCM_VN");
@@ -403,9 +412,16 @@ public class LocationApiControllerTests {
 		location.setCountryName("Vietnam");
 		location.setCountryCode("VN");
 
-		Mockito.when(this.locationService.getLocationByCode(code)).thenReturn(location);
+		Mockito.when(this.locationService.getLocationByCode(locationCode)).thenReturn(location);
 
-		mockMvc.perform(get(requestUri)).andExpect(status().isOk()).andDo(print());
+		mockMvc.perform(get(requestUri)).andExpect(status().isOk()).andExpect(status().isOk())
+				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + locationCode)))
+				.andExpect(jsonPath("$._links.realtime.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
+				.andDo(print());
 	}
 
 	@Test
@@ -424,7 +440,7 @@ public class LocationApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
-		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+		mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.errors[0]", is(locationNotFoundException.getMessage()))).andDo(print());
 	}
@@ -439,14 +455,16 @@ public class LocationApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
-		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+		mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print());
 	}
 
 	@Test
 	public void testUpdateLocationShouldReturn200Ok() throws Exception {
+		String locationCode = "HCM_VN";
+
 		Location location = new Location();
-		location.setCode("HCM_VN");
+		location.setCode(locationCode);
 		location.setCityName("Ho Chi Minh City");
 		location.setRegionName("Southern Vietnam");
 		location.setCountryName("Vietnam");
@@ -464,7 +482,13 @@ public class LocationApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(locationDTO);
 
-		mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+		mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
+				.andExpect(status().isOk()).andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + locationCode)))
+				.andExpect(jsonPath("$._links.realtime.href", is("http://localhost/v1/realtime/" + locationCode)))
+				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+				.andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
 				.andExpect(status().isOk()).andDo(print());
 	}
 
@@ -497,7 +521,8 @@ public class LocationApiControllerTests {
 
 		String bodyContent = objectMapper.writeValueAsString(location);
 
-		MvcResult mvcResult = mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
+		MvcResult mvcResult = mockMvc
+				.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
 				.andExpect(status().isBadRequest()).andDo(print()).andReturn();
 
 		String responseBody = mvcResult.getResponse().getContentAsString();

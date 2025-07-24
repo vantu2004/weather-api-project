@@ -29,6 +29,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skyapi.weatherforecast.common.Location;
+import com.skyapi.weatherforecast.daily.DailyWeatherApiController;
+import com.skyapi.weatherforecast.full.FullWeatherApiController;
+import com.skyapi.weatherforecast.hourly.HourlyWeatherApiController;
+import com.skyapi.weatherforecast.realtime.RealtimeWeatherApiController;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -56,11 +60,13 @@ public class LocationApiController {
 		 */
 		URI uri = URI.create("/v1/locations/" + addedLocation.getCode());
 
+		LocationDTO addedLocationDTO = this.convertLocationEntityToDTO(addedLocation);
+
 		/*
 		 * hàm created() có tác dụng tạo thêm Location trong header, nghĩa là cho biết
 		 * vị trí tài nguyên ms đc tạo nằm ở đâu
 		 */
-		return ResponseEntity.created(uri).body(this.convertLocationEntityToDTO(addedLocation));
+		return ResponseEntity.created(uri).body(this.addLinksByLocation(addedLocationDTO));
 	}
 
 	@Deprecated
@@ -109,7 +115,7 @@ public class LocationApiController {
 
 		if (listLocations.isEmpty()) {
 			return ResponseEntity.noContent().build();
-		}	
+		}
 
 		List<LocationDTO> locationDTOs = this.convertListLocationEntityToDTO(listLocations);
 
@@ -186,16 +192,37 @@ public class LocationApiController {
 		return collectionModel;
 	}
 
+	private LocationDTO addLinksByLocation(LocationDTO locationDTO) {
+		locationDTO.add(linkTo(methodOn(LocationApiController.class).getLocation(locationDTO.getCode())).withSelfRel());
+		locationDTO.add(
+				linkTo(methodOn(RealtimeWeatherApiController.class).getRealtimeByLocationCode(locationDTO.getCode()))
+						.withRel("realtime"));
+		locationDTO.add(linkTo(methodOn(HourlyWeatherApiController.class)
+				.listHourlyForecastByLocationCode(locationDTO.getCode(), null)).withRel("hourly_forecast"));
+		locationDTO.add(
+				linkTo(methodOn(DailyWeatherApiController.class).getDailyForecastByLocationCode(locationDTO.getCode()))
+						.withRel("daily_forecast"));
+		locationDTO.add(
+				linkTo(methodOn(FullWeatherApiController.class).getFullWeatherByLocationCode(locationDTO.getCode()))
+						.withRel("full_forecast"));
+
+		return locationDTO;
+	}
+
 	@GetMapping("/{code}")
 	public ResponseEntity<?> getLocation(@PathVariable("code") String code) {
 		Location location = this.locationService.getLocationByCode(code);
-		return ResponseEntity.ok(this.convertLocationEntityToDTO(location));
+		LocationDTO locationDTO = this.convertLocationEntityToDTO(location);
+
+		return ResponseEntity.ok(this.addLinksByLocation(locationDTO));
 	}
 
 	@PutMapping
 	public ResponseEntity<?> updateLocation(@RequestBody @Valid LocationDTO locationDTO) {
 		Location location = this.locationService.updateLocation(this.convertLocationDTOToEntity(locationDTO));
-		return ResponseEntity.ok(this.convertLocationEntityToDTO(location));
+		LocationDTO updatedLocationDTO = this.convertLocationEntityToDTO(location);
+
+		return ResponseEntity.ok(this.addLinksByLocation(updatedLocationDTO));
 	}
 
 	@DeleteMapping("/{code}")
