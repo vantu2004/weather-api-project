@@ -38,11 +38,21 @@ public class LocationService extends AbstractLocationService {
 		return this.locationRepository.findAllUnTrashed(pageable);
 	}
 
-	public Page<Location> getAllLocationUnTrashedWithFilter(Integer pageNum, Integer pageSize, String sortField,
+	public Page<Location> getAllLocationUnTrashedWithFilter(Integer pageNum, Integer pageSize, String sortOption,
 			Map<String, Object> filterFields) {
-		Sort sort = Sort.by(sortField).ascending();
-		Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
 
+		// tránh null
+		Sort sort = Sort.unsorted(); 
+
+		String[] sortFields = sortOption.split(",");
+		for (String sortField : sortFields) {
+			String actualSortField = sortField.replace("-", "");
+			Sort tempSort = sortField.startsWith("-") ? Sort.by(actualSortField).descending()
+					: Sort.by(actualSortField).ascending();
+			sort = sort.and(tempSort);
+		}
+
+		Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
 		return this.locationRepository.listWithFilter(pageable, filterFields);
 	}
 

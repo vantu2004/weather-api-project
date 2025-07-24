@@ -82,14 +82,34 @@ public class LocationApiController {
 	public ResponseEntity<?> listAllLocations(
 			@RequestParam(value = "page", required = false, defaultValue = "1") @Min(value = 1) Integer page,
 			@RequestParam(value = "size", required = false, defaultValue = "5") @Min(value = 1) @Max(value = 20) Integer size,
-			@RequestParam(value = "sort", required = false, defaultValue = "code") String sort,
+			@RequestParam(value = "sort", required = false, defaultValue = "code") String sortOption,
 			@RequestParam(value = "enabled", required = false, defaultValue = "") String enabled,
 			@RequestParam(value = "region_name", required = false, defaultValue = "") String regionName,
 			@RequestParam(value = "country_code", required = false, defaultValue = "") String countryCode)
 			throws BadRequestException {
 
-		if (!propertyMap.containsKey(sort)) {
-			throw new BadRequestException("Invalid sort field: " + sort);
+		String[] sortFields = sortOption.split(",");
+		if (sortFields.length > 1) {
+			for (String sortField : sortFields) {
+				String actualSortField = sortField.replace("-", "");
+				if (!propertyMap.containsKey(actualSortField)) {
+					throw new BadRequestException("Invalid sort field: " + sortOption);
+				}
+
+				sortOption = sortOption.replace(actualSortField, propertyMap.get(actualSortField));
+			}
+		} else {
+			// giả sử sortOption là "-region_name" -> actualSortField là "region_name"
+			String actualSortField = sortOption.replace("-", "");
+			if (!propertyMap.containsKey(actualSortField)) {
+				throw new BadRequestException("Invalid sort field: " + sortOption);
+			}
+
+			/*
+			 * chuẩn hóa lại sortOption (snakecase) theo propertyMap (camelcase) ->
+			 * sortOption sẽ là -regionName, bên service có xử lý riêng cho sortOption rồi
+			 */
+			sortOption = sortOption.replace(actualSortField, propertyMap.get(actualSortField));
 		}
 
 		// tạo map các field được lọc
@@ -110,7 +130,7 @@ public class LocationApiController {
 		 * sort (Hibernate chỉ hiểu khi sort <=> tên field trong entity)
 		 */
 		Page<Location> pageLocations = this.locationService.getAllLocationUnTrashedWithFilter(page - 1, size,
-				propertyMap.get(sort), filterFields);
+				sortOption, filterFields);
 		List<Location> listLocations = pageLocations.getContent();
 
 		if (listLocations.isEmpty()) {
@@ -119,8 +139,8 @@ public class LocationApiController {
 
 		List<LocationDTO> locationDTOs = this.convertListLocationEntityToDTO(listLocations);
 
-		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sort, enabled,
-				regionName, countryCode));
+		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sortOption,
+				enabled, regionName, countryCode));
 	}
 
 	/*
