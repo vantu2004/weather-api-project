@@ -88,29 +88,7 @@ public class LocationApiController {
 			@RequestParam(value = "country_code", required = false, defaultValue = "") String countryCode)
 			throws BadRequestException {
 
-		String[] sortFields = sortOption.split(",");
-		if (sortFields.length > 1) {
-			for (String sortField : sortFields) {
-				String actualSortField = sortField.replace("-", "");
-				if (!propertyMap.containsKey(actualSortField)) {
-					throw new BadRequestException("Invalid sort field: " + sortOption);
-				}
-
-				sortOption = sortOption.replace(actualSortField, propertyMap.get(actualSortField));
-			}
-		} else {
-			// giả sử sortOption là "-region_name" -> actualSortField là "region_name"
-			String actualSortField = sortOption.replace("-", "");
-			if (!propertyMap.containsKey(actualSortField)) {
-				throw new BadRequestException("Invalid sort field: " + sortOption);
-			}
-
-			/*
-			 * chuẩn hóa lại sortOption (snakecase) theo propertyMap (camelcase) ->
-			 * sortOption sẽ là -regionName, bên service có xử lý riêng cho sortOption rồi
-			 */
-			sortOption = sortOption.replace(actualSortField, propertyMap.get(actualSortField));
-		}
+		sortOption = this.validateSortOption(sortOption);
 
 		// tạo map các field được lọc
 		Map<String, Object> filterFields = new HashMap<String, Object>();
@@ -141,6 +119,41 @@ public class LocationApiController {
 
 		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sortOption,
 				enabled, regionName, countryCode));
+	}
+
+	private String validateSortOption(String sortOption) throws BadRequestException {
+		/*
+		 * String là immutable, sau khi biến đổi mà lại gán trực tiếp lại cho sortOption
+		 * có khi gây lỗi vì đổi dữ liệu gốc, hàm replace sẽ trả về chuỗi mới -> dùng
+		 * biến mới cho an toàn
+		 */
+		String translatedSortOption = sortOption;
+
+		String[] sortFields = sortOption.split(",");
+		if (sortFields.length > 1) {
+			for (String sortField : sortFields) {
+				String actualSortField = sortField.replace("-", "");
+				if (!propertyMap.containsKey(actualSortField)) {
+					throw new BadRequestException("Invalid sort field: " + sortOption);
+				}
+
+				translatedSortOption = translatedSortOption.replace(actualSortField, propertyMap.get(actualSortField));
+			}
+		} else {
+			// giả sử sortOption là "-region_name" -> actualSortField là "region_name"
+			String actualSortField = sortOption.replace("-", "");
+			if (!propertyMap.containsKey(actualSortField)) {
+				throw new BadRequestException("Invalid sort field: " + sortOption);
+			}
+
+			/*
+			 * chuẩn hóa lại sortOption (snakecase) theo propertyMap (camelcase) ->
+			 * sortOption sẽ là -regionName, bên service có xử lý riêng cho sortOption rồi
+			 */
+			translatedSortOption = sortOption.replace(actualSortField, propertyMap.get(actualSortField));
+		}
+
+		return translatedSortOption;
 	}
 
 	/*

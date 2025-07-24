@@ -18,6 +18,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -36,6 +37,20 @@ public class FilterableLocationRepositoryImpl implements FilterableLocationRepos
 		CriteriaQuery<Location> criteriaQuery = criteriaBuilder.createQuery(Location.class);
 
 		Root<Location> root = criteriaQuery.from(Location.class);
+
+		/*
+		 * root đại diện cho bảng Location, cho LEFT JOIN với bảng RealtimeWeather để
+		 * khi query list location thì sẽ LEFT JOIN trc, sau đó ms query (gộp thành 1
+		 * query)
+		 * 
+		 * cho LEFT JOIN để đảm bảo dù realtimeWeather null thì vẫn lấy location
+		 * 
+		 * do Location-RealtimeWeather quan hệ 1-1 -> hibernate ưu tiên EAGER LOAD,
+		 * nghĩa là 1 query list có n location sẽ bổ sung thêm n query khác cho
+		 * realtimwWeather, còn đối với DailyWeather/HourlyWeather là 1-n nên sẽ là
+		 * LAZY, bao h gọi thì ms query
+		 */
+		root.fetch("realtimeWeather", JoinType.LEFT);
 
 		List<Predicate> predicates = this.createPredicates(filterFields, criteriaBuilder, root);
 		if (!predicates.isEmpty()) {
