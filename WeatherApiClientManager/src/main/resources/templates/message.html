@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head th:replace="~{fragments :: page_head('Home - Weather API Client Manager', 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	<div class="text-center">
+		<div><h2>Weather API Client Manager</h2></div>
+		<div>&nbsp;</div>
+		
+		<div><h4>[[${message}]]</h4></div>
+		
+		<div>&nbsp;</div>
+	</div>
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+</body>
+</html>

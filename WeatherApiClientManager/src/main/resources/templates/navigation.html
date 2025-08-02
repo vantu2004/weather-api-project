@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<body>
+<div th:fragment="menu">
+	<form th:action="@{/signout}" method="post" th:hidden="true" name="logoutForm">
+		<input type="submit" />
+	</form>
+	<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+		<a class="navbar-brand" th:href="@{/}">
+			<img th:src="@{/images/appicon.png}" width="32" height="32" />
+		</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="topNavbar">			
+			
+			<ul class="navbar-nav">
+				<th:block sec:authorize="isAuthenticated()">
+				<span class="navbar-text">
+					[&nbsp;&nbsp;<i>Welcome, <span sec:authentication="principal.name"></span></i>	
+				</span>
+				
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/account}">Account</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" id="linkSignout" href="">Sign Out</a>
+				</li>				
+				<span class="navbar-text">]</span>
+				</th:block>
+				
+				<th:block sec:authorize="!isAuthenticated()">
+				<span class="navbar-text">
+					[&nbsp;&nbsp;<i>Welcome Guest</i>&nbsp;&nbsp;]	
+				</span>
+				</th:block>
+				
+								
+								
+				<th:block sec:authorize="hasAuthority('ADMIN')">
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/users}">All Users</a>
+				</li>
+				
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/users/page/1(sortField=name,sortDir=asc,keyword=ADMIN)}">Admin Users</a>
+				</li>
+				
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/users/page/1(sortField=name,sortDir=asc,keyword=CLIENT)}">Client Users</a>
+				</li>
+				
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/apps}">Client Apps</a>
+				</li>
+				</th:block>
+
+				<th:block sec:authorize="hasAuthority('CLIENT')">
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/myapps}">My Apps</a>
+				</li>
+				</th:block>						
+				
+				<th:block sec:authorize="!isAuthenticated()">
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/signin}">Sign In</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" th:href="@{/signup}">Sign Up</a>
+				</li>				
+				</th:block>
+			</ul>
+			
+		</div>
+		
+	</nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: page_head(${pageTitle}, 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	
+	<div>
+		<h2>My Account Details</h2>
+	</div>
+	
+	<div>&nbsp;</div>
+	
+	<form th:action="@{/account}" method="post" style="max-width: 600px; margin: 0 auto"
+			th:object="${userDetails}">
+	<div class="border border-secondary rounded p-3">
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">E-mail:</label>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" th:field="*{email}" readonly="readonly" />
+				<span class="text-info">E-mail cannot be changed</span>
+			</div>
+		</div>	
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Name:</label>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" th:field="*{name}" required minlength="3" maxlength="50" />
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">New Password:</label>
+			<div class="col-sm-8">
+				<input type="password" class="form-control" th:field="*{password}" minlength="6" maxlength="15"  />
+				<span class="text-info">Leave empty if you don't want to change password</span>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Confirm New Password:</label>
+			<div class="col-sm-8">
+				<input type="password" class="form-control" name="confirmPassword" minlength="6" maxlength="15"
+					oninput="checkPasswordMatch(this)" />
+			</div>
+		</div>
+							
+		<div class="text-center">
+			<input type="submit" value="Save" class="btn btn-primary m-3" />
+			<input type="button" value="Cancel" class="btn btn-secondary" id="buttonCancel" />
+		</div>		
+	</div>
+	</form>
+	
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("#buttonCancel").on("click", function() {
+			window.location = "[[@{'/'}]]";
+		});
+	});
+</script>
+</body>
+</html>

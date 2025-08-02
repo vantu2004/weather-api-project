@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: page_head(${pageTitle}, 'none')" />
+<body>
+<div class="container">
+	<div th:replace="navigation :: menu"></div>
+	<div>&nbsp;</div>
+	
+	<div>
+		<h2>Client Apps | [[${pageTitle}]]</h2>
+	</div>
+	
+	<div>&nbsp;</div>
+	
+	<form style="max-width: 700px; margin: 0 auto">
+	
+	<div class="alert alert-success">New client app has been created. Save Client ID and Client Secret for API access.</div>
+	<div>&nbsp;</div>
+	
+	<div class="border border-secondary rounded p-3">
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">App Name:</label>
+			<div class="col-sm-8">
+				<span>[[${app.name}]]</span>
+			</div>
+		</div>	
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Client ID:</label>
+			<div class="col-sm-8">
+				<span>[[${app.clientId}]]</span>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Client Secret:</label>
+			<div class="col-sm-8">
+				<span><b>[[${app.rawClientSecret}]]</b></span>
+			</div>
+			<span class="text-danger">Save this client secret securely as it won't be shown again.</span>
+		</div>
+	
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Enabled Status:</label>
+			<div class="col-sm-8">
+				<input type="checkbox" readonly="readonly" th:checked="${app.enabled}" onclick="return false;" />
+			</div>
+		</div>			
+		<div class="text-center">
+			<input type="button" value="Manage Apps" class="btn btn-secondary" id="buttonCancel" />
+		</div>		
+	</div>
+	</form>
+	
+	<div>&nbsp;</div>
+	<div th:replace="fragments :: footer"></div>
+</div>
+<script type="text/javascript">
+$(document).ready(function() {
+	$("#buttonCancel").on("click", function() {
+		window.location = "[[@{'/apps'}]]";
+	});
+});
+
+</script>
+</body>
+</html>

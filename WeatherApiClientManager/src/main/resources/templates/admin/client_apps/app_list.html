@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: page_head('Client Apps - Weather API Client Manager', 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	
+	<div>
+		<h2>Client Apps</h2>
+		<a th:href="@{/apps/new(role=system)}">Add System App</a>&nbsp;&nbsp;|&nbsp;
+		<a th:href="@{/apps/new(role=updater)}">Add Updater App</a>&nbsp;&nbsp;|&nbsp;
+		<a th:href="@{/apps/new(role=reader)}">Add Reader App</a>
+	</div>
+	
+	<div th:replace="~{fragments :: search_form_and_message}" />
+	
+	<div>
+		<table class="table table-bordered table-striped table-hover table-responsive-xl">
+			<thead class="table-dark">
+				<tr>
+					<th th:replace="~{fragments :: column_link('id', 'App ID', 'none')}" />
+					<th th:replace="~{fragments :: column_link('name', 'App Name', 'none')}" />
+					<th th:replace="~{fragments :: column_link('role', 'App Role', 'none')}" />
+					<th th:replace="~{fragments :: column_link('user.name', 'Assigned to', 'none')}" />
+					<th th:replace="~{fragments :: column_link('location.code', 'Location Code', 'none')}" />
+					<th th:replace="~{fragments :: column_link('enabled', 'Enabled', 'none')}" />
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="app : ${listApps}">
+					<td>[[${app.id}]]</td>
+					<td>[[${app.name}]]</td>
+					<td>[[${app.role}]]</td>
+					<td>[[${app.user.name}]]</td>
+					<td>[[${app.location?.code}]]</td>
+					<td align="center">
+						<div th:replace="~{fragments :: status(${app.enabled}, 'app', '/apps/' + ${app.id})}" />
+					</td>
+					<td align="center">
+						<div th:replace="~{fragments :: view('app', '/apps/detail/' + ${app.id})}" />
+						&nbsp;&nbsp;&nbsp;					
+						<div th:replace="~{fragments :: edit('app', '/apps/edit/' + ${app.id})}" />
+						&nbsp;&nbsp;&nbsp;
+						<div th:replace="~{fragments :: delete('app', ${app.id}, '/apps/delete/' + ${app.id})}" />
+					</td>
+				</tr>
+			</tbody>
+		</table>	
+	</div>
+	<div th:replace="~{fragments :: pagination('apps')}"></div>
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: confirm_modal}" />
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+<script type="text/javascript">
+	moduleURL = "[[@{/apps}]]";
+	
+	$(document).ready(function() {
+		$(".link-delete").on("click", function(e) {
+			e.preventDefault();
+			showDeleteConfirmModal($(this), 'app');
+		});
+	});	
+</script>
+</body>
+</html>

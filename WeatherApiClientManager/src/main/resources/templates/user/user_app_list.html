@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: page_head('My Apps - Weather API Client Manager', 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	
+	<div>
+		<h2>My API Client Apps</h2>
+		<a th:href="@{/myapps/new}">Add New App</a>
+	</div>
+	
+	<div th:replace="~{fragments :: search_form_and_message}" />
+	
+	<div>
+		<table class="table table-bordered table-striped table-hover table-responsive-xl">
+			<thead class="table-dark">
+				<tr>
+					<th th:replace="~{fragments :: column_link('id', 'App ID', 'none')}" />
+					<th th:replace="~{fragments :: column_link('name', 'App Name', 'none')}" />
+					<th th:replace="~{fragments :: column_link('clientId', 'Client ID', 'none')}" />
+					<th th:replace="~{fragments :: column_link('enabled', 'Enabled', 'none')}" />
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="app : ${listApps}">
+					<td>[[${app.id}]]</td>
+					<td>[[${app.name}]]</td>
+					<td>[[${app.clientId}]]</td>
+					<td align="center">
+						<div th:replace="~{fragments :: status(${app.enabled}, 'app', '/myapps/' + ${app.id})}" />
+					</td>
+					<td align="center">
+						<div th:replace="~{fragments :: view('app', '/myapps/detail/' + ${app.id})}" />
+						&nbsp;&nbsp;&nbsp;
+						<div th:replace="~{fragments :: edit('app', '/myapps/edit/' + ${app.id})}" />
+						&nbsp;&nbsp;&nbsp;
+						<div th:replace="~{fragments :: delete('app', ${app.id}, '/myapps/delete/' + ${app.id})}" />
+					</td>
+				</tr>
+			</tbody>
+		</table>	
+	</div>
+	<div th:replace="~{fragments :: pagination('apps')}"></div>
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: confirm_modal}" />
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+<script type="text/javascript">
+	moduleURL = "[[@{/myapps}]]";
+	
+	$(document).ready(function() {
+		$(".link-delete").on("click", function(e) {
+			e.preventDefault();
+			showDeleteConfirmModal($(this), 'app');
+		});
+	});	
+</script>
+</body>
+</html>

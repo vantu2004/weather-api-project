@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head th:replace="~{fragments :: page_head('Home - Weather API Client Manager', 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	<div class="text-center">
+		<div><h2>Weather API Client Manager</h2></div>
+		<div>&nbsp;</div>
+		
+		<th:block sec:authorize="!isAuthenticated()">
+			<div><h3><a th:href="@{/signup}">Sign Up</a></h3></div>
+			<div>&nbsp;</div>
+			<div><h3><a th:href="@{/signin}">Sign In</a></h3></div>
+		</th:block>
+		
+		<th:block sec:authorize="isAuthenticated()">
+			<div><h4>Welcome, [[${request.userPrincipal.principal.name}]]</h4></div>
+			<div><h4>Your user type: [[${request.userPrincipal.principal.roleName}]]</h4></div>
+		</th:block>
+	</div>
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+</body>
+</html>

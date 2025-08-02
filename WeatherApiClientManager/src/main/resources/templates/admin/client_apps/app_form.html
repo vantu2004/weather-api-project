@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: page_head(${pageTitle}, 'none')}" />
+<body>
+<div class="container">
+	<div th:replace="~{navigation :: menu}"></div>
+	<div>&nbsp;</div>
+	
+	<div>
+		<h2>Client Apps | [[${pageTitle}]]</h2>
+	</div>
+	
+	<div>&nbsp;</div>
+	
+	<div th:if="${message != null}" class="alert alert-warning text-center">
+		[[${message}]]
+	</div>	
+	
+	<form th:action="@{/apps/save}" method="post" style="max-width: 700px; margin: 0 auto"
+			th:object="${app}">
+			<input type="hidden" th:field="*{id}" />
+	<div class="border border-secondary rounded p-3">
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">App Name:</label>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" th:field="*{name}" required minlength="3" maxlength="50"  />
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Assigned to User:</label>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" id="assignedUser" name="assignedUser" list="listUsers" th:value="${app.assignedUser}"  />
+				<datalist id="listUsers"></datalist>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Client ID:</label>
+			<div class="col-sm-8">
+				<span th:if="${!isEdit}"><i>App's Client ID will be generated automatically.</i></span>
+				<span th:if="${isEdit}"><i>App's Client ID cannot be changed.</i></span>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Client Secret:</label>
+			<div class="col-sm-8">
+				<span th:if="${!isEdit}"><i>App's Client Secret will be generated automatically.</i></span>
+				<span th:if="${isEdit}"><i>App's Client Secret cannot be changed.</i></span>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Role:</label>
+			<div class="col-sm-8">
+				<select th:field="*{role}" class="form-control">
+					<option value="READER">Reader</option>
+					<option value="UPDATER">Updater</option>
+					<option value="SYSTEM">System</option>
+				</select>
+			</div>
+		</div>
+		<div class="row mb-3" id="divLocation">
+			<label class="col-sm-4 col-form-label">Location:</label>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" id="assignedLocation" name="assignedLocation" list="listLocations" th:value="${app.assignedLocation}" />
+				<datalist id="listLocations"></datalist>
+			</div>
+		</div>				
+		<div class="row mb-3">
+			<label class="col-sm-4 col-form-label">Enabled:</label>
+			<div class="col-sm-8">
+				<input type="checkbox" th:field="*{enabled}" />
+			</div>
+		</div>			
+		<div class="text-center">
+			<input type="submit" value="Save" class="btn btn-primary m-3" />
+			<input type="button" value="Cancel" class="btn btn-secondary" id="buttonCancel" />
+		</div>		
+	</div>
+	</form>
+	
+	<div>&nbsp;</div>
+	<div th:replace="~{fragments :: footer}"></div>
+</div>
+<script type="text/javascript">
+	userField = $("#assignedUser");
+	locationField = $("#assignedLocation");
+	locationDiv = $("#divLocation");
+	roleField = $("#role");
+	
+	csrfValue = $("input[name='_csrf']").val();
+	dataListUsers = $("#listUsers");
+	dataListLocations = $("#listLocations");
+	
+	$(document).ready(function() {
+		$("#buttonCancel").on("click", function() {
+			window.location = "[[@{'/apps'}]]";
+		});
+		
+		userField.on("input propertychange", function() {
+			keyword = userField.val();
+			if (keyword.length > 2) {
+				doAutoCompleteForUser(keyword);
+			}
+		});
+
+		locationField.on("input propertychange", function() {
+			keyword = locationField.val();
+			if (keyword.length > 1) {
+				doAutoCompleteForLocation(keyword);
+			}
+		});
+		
+		roleField.on("change", function() {
+			hideOrShowLocationDiv();
+		});
+		
+		hideOrShowLocationDiv();
+	});
+	
+	function hideOrShowLocationDiv() {
+		selectedRole = $("#role :selected").val();
+		
+		if (selectedRole != "UPDATER") {
+			locationField.prop("required", false);
+			locationDiv.hide();
+		} else {
+			locationField.prop("required", true);
+			locationDiv.show();
+		}
+	}
+	
+	function doAutoCompleteForUser(keyword) {
+		url = "[[@{/users/search}]]";
+		
+		params = {keyword: keyword, _csrf: csrfValue};
+		
+		$.post(url, params, function(response) {
+			renderUserSearchResult(response);
+		}).fail(function() {
+			alert('error');
+		});			
+	}
+	
+	function renderUserSearchResult(responseJSON) {
+		dataListUsers.empty();
+		
+		$.each(responseJSON, function(index, user) {
+			optionText = user.name + " - " + user.email;
+			$("<option>").text(optionText).appendTo(dataListUsers);
+		});
+	}
+
+	function doAutoCompleteForLocation(keyword) {
+		url = "[[@{/locations/search}]]";
+		
+		params = {keyword: keyword, _csrf: csrfValue};
+		
+		$.post(url, params, function(response) {
+			renderLocationSearchResult(response);
+		}).fail(function() {
+			alert('error');
+		});			
+	}	
+	
+	function renderLocationSearchResult(responseJSON) {
+		dataListLocations.empty();
+		
+		$.each(responseJSON, function(index, location) {
+			optionText = location.code + " - " + location.region_name + ", " + location.city_name + ", " + location.country_name;
+			$("<option>").text(optionText).appendTo(dataListLocations);
+		});
+	}	
+</script>
+</body>
+</html>
