@@ -1,0 +1,33 @@
+@import
+	url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap')
+	;
+
+:root {
+	--primary-color: #4a90e2;
+	--accent-color: #00c6ff;
+	--bg-color: #ecf3f9;
+	--card-bg: #ffffff;
+	--text-color: #1c1c1c;
+	--muted-color: #6e7c87;
+	--radius: 16px;
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+	--shadow-light: 0 4px 12px rgba(74, 144, 226, 0.2);
+}
+
+.dashboard-footer {
+	background-color: var(--card-bg);
+	border-top: 1px solid rgba(0, 0, 0, 0.1);
+	padding: 16px 24px;
+	text-align: center;
+	font-size: 14px;
+	color: var(--muted-color);
+	border-top-left-radius: var(--radius);
+	border-top-right-radius: var(--radius);
+	box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+	margin-top: 40px;
+}
+
+.dashboard-footer p {
+	margin: 0;
+	font-weight: 400;
+}

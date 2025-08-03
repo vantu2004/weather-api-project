@@ -81,6 +81,20 @@ public class Location {
 	@Builder.Default
 	private List<DailyWeather> listDailyWeathers = new ArrayList<DailyWeather>();
 
+	public Location(
+			@NotNull(message = "Location code cannot be null") @Length(min = 3, max = 12, message = "Location code must have 3-12 characters") String code,
+			@NotNull(message = "City name cannot be null") @Length(min = 3, max = 128, message = "City name must have 3-128 characters") String cityName,
+			@Length(min = 3, max = 128, message = "Region name must have 3-128 characters") String regionName,
+			@NotNull(message = "Country name cannot be null") @Length(min = 3, max = 64, message = "Country name must have 3-64 characters") String countryName,
+			@NotNull(message = "Country code cannot be null") @Length(min = 2, max = 2, message = "Country code must have 2 characters") String countryCode) {
+		super();
+		this.code = code;
+		this.cityName = cityName;
+		this.regionName = regionName;
+		this.countryName = countryName;
+		this.countryCode = countryCode;
+	}
+
 	// phục vụ test với mockito
 	@Override
 	public int hashCode() {
@@ -120,4 +134,5 @@ public class Location {
 		setCode(locationInRequest.getCode());
 		setTrashed(locationInRequest.isTrashed());
 	}
+
 }

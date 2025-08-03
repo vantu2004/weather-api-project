@@ -12,40 +12,32 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class WebSecurityConfig {
-	
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new CustomUserDetailsService();
-    }
-    
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-    
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(
-        		auth -> auth.requestMatchers("/signin", "/signup").permitAll()
-        		.requestMatchers("/users/**", "/apps/**").hasAuthority("ADMIN")
-        		.requestMatchers("/myapps/**").hasAuthority("CLIENT")
-        		.anyRequest().authenticated()
-               )
-                .formLogin(formLogin -> formLogin
-                		.loginPage("/signin")
-                		.usernameParameter("email")
-                		.defaultSuccessUrl("/", true)
-                		.permitAll()
-                )
-                .rememberMe(withDefaults())
-                .logout(logout -> logout.logoutUrl("/signout").permitAll());
- 
- 
-        return http.build();
-    }
 
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers("/images/**", "/js/**", "/webjars/**");
-    }
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return new CustomUserDetailsService();
+	}
+
+	@Bean
+	public BCryptPasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(auth -> auth.requestMatchers("/signin", "/signup").permitAll()
+				.requestMatchers("/users/**", "/apps/**").hasAuthority("ADMIN").requestMatchers("/myapps/**")
+				.hasAuthority("CLIENT").anyRequest().authenticated())
+				.formLogin(formLogin -> formLogin.loginPage("/signin").usernameParameter("email")
+						.defaultSuccessUrl("/", true).permitAll())
+				.rememberMe(withDefaults()).logout(logout -> logout.logoutUrl("/signout").permitAll());
+
+		return http.build();
+	}
+
+	@Bean
+	public WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> web.ignoring().requestMatchers("/css/**", "/images/**", "/js/**", "/webjars/**", "/webfonts/**",
+				"/style.css", "fontawesome/**");
+	}
 }

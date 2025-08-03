@@ -1,0 +1,98 @@
+:root {
+	--primary-color: #4e91f9;
+	--accent-color: #68d0ff;
+	--bg-light: #f7f9fc;
+	--text-dark: #2b2d42;
+	--shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	--radius: 12px;
+	--font: 'Segoe UI', sans-serif;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg-light);
+	font-family: var(--font);
+	color: var(--text-dark);
+}
+
+h2 {
+	font-size: 32px;
+	font-weight: 700;
+	color: var(--primary-color);
+	margin-bottom: 16px;
+}
+
+h3, h4 {
+	color: var(--text-dark);
+	margin: 12px 0;
+}
+
+a {
+	text-decoration: none;
+	color: var(--primary-color);
+	font-weight: 600;
+	transition: all 0.3s ease;
+}
+
+a:hover {
+	color: var(--accent-color);
+	text-decoration: underline;
+}
+
+.footer {
+	background: linear-gradient(135deg, var(--primary-color),
+		var(--accent-color));
+	color: white;
+	text-align: center;
+	padding: 16px 0;
+	font-size: 15px;
+	box-shadow: var(--shadow);
+	border-top-left-radius: var(--radius);
+	border-top-right-radius: var(--radius);
+	margin-top: 40px;
+}
+
+.text-center {
+	padding: 24px;
+	background: white;
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+/* ✨ New: Styling for authenticated user section */
+.user-info-card {
+	background: linear-gradient(135deg, #ffffff, #eef6ff);
+	border: 1px solid #d6e4ff;
+	border-radius: var(--radius);
+	padding: 24px;
+	box-shadow: var(--shadow);
+	animation: fadeIn 0.8s ease;
+	transition: all 0.3s ease;
+}
+
+.user-info-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.user-welcome h4, .user-role h4 {
+	font-size: 20px;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #2c3e50;
+}
+
+@keyframes fadeIn {from { opacity:0;
+	transform: translateY(10px);
+	}
+	
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
