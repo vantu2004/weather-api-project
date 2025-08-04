@@ -1,0 +1,123 @@
+@import
+	url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap')
+	;
+
+:root {
+	--primary-color: #4a90e2;
+	--accent-color: #00c6ff;
+	--bg-color: #ecf3f9;
+	--card-bg: #ffffff;
+	--text-color: #1c1c1c;
+	--muted-color: #6e7c87;
+	--radius: 16px;
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+	--shadow-light: 0 4px 12px rgba(74, 144, 226, 0.2);
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	font-weight: 600;
+	color: var(--primary-color);
+	margin-top: 32px;
+	text-align: center;
+}
+
+/* Form Container */
+form {
+	background-color: var(--card-bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+	padding: 32px;
+	max-width: 700px;
+	margin: 0 auto;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+form:hover {
+	transform: translateY(-4px);
+	box-shadow: var(--shadow);
+}
+
+/* Label styling */
+label {
+	font-weight: 500;
+	color: var(--text-color);
+	margin-bottom: 6px;
+}
+
+/* Input & Select */
+input[type="text"], input[type="email"], input[type="password"], select
+	{
+	width: 100%;
+	padding: 12px;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	outline: none;
+	background-color: #fff;
+	font-family: 'Inter', sans-serif;
+	transition: border-color 0.2s;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus,
+	select:focus {
+	border-color: var(--primary-color);
+}
+
+/* Checkbox center alignment */
+input[type="checkbox"] {
+	transform: scale(1.2);
+	margin-top: 7px;
+}
+
+/* Client ID & Secret message */
+#client_id, #client_secret {
+	font-size: 0.85rem;
+	color: var(--muted-color);
+}
+
+/* Alert */
+.alert {
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+}
+
+/* Button styles */
+.text-end input[type="submit"], .text-end input[type="button"] {
+	padding: 10px 24px;
+	background: linear-gradient(to right, var(--primary-color),
+		var(--accent-color));
+	border: none;
+	border-radius: 999px;
+	color: white;
+	font-weight: 600;
+	box-shadow: var(--shadow-light);
+	cursor: pointer;
+	transition: transform 0.2s, box-shadow 0.2s;
+	margin: 8px;
+}
+
+.text-end input[type="submit"]:hover, .text-end input[type="button"]:hover
+	{
+	transform: translateY(-2px);
+	box-shadow: var(--shadow);
+}
+
+/* Responsive */
+@media ( max-width : 576px) {
+	form {
+		padding: 24px 16px;
+	}
+	.text-center {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		align-items: stretch;
+	}
+}

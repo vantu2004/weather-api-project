@@ -1,0 +1,102 @@
+@import
+	url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap')
+	;
+
+:root {
+	--primary-color: #0066cc;
+	--accent-color: #20c997;
+	--bg-color: #f4f7fa;
+	--card-bg: #ffffff;
+	--text-color: #2d3436;
+	--muted-color: #7f8c8d;
+	--radius: 16px;
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+	--shadow-light: 0 4px 12px rgba(0, 102, 204, 0.2);
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	text-align: center;
+	color: var(--primary-color);
+	font-weight: 600;
+	margin-top: 32px;
+}
+
+/* Alert message */
+.alert {
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+	font-weight: 500;
+}
+
+/* Form container */
+form {
+	background-color: var(--card-bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+	padding: 32px;
+	max-width: 700px;
+	margin: 0 auto;
+	transition: box-shadow 0.3s ease;
+}
+
+form:hover {
+	box-shadow: var(--shadow);
+}
+
+label {
+	font-weight: 500;
+	color: var(--text-color);
+	margin-bottom: 6px;
+}
+
+/* Display-only values */
+span i {
+	color: var(--muted-color);
+	font-style: normal;
+	display: inline-block;
+	padding: 8px 0;
+}
+
+/* Read-only checkbox */
+input[type="checkbox"] {
+	transform: scale(1.2);
+	margin-top: 6px;
+	cursor: default;
+}
+
+/* Button style */
+.text-end .btn {
+	padding: 10px 24px;
+	border: none;
+	border-radius: 999px;
+	font-weight: 600;
+	box-shadow: var(--shadow-light);
+	transition: all 0.2s ease-in-out;
+	text-decoration: none;
+}
+
+.text-end .btn-secondary {
+	background-color: #868e96;
+	color: white;
+}
+
+.text-end .btn-secondary:hover {
+	background-color: #6c757d;
+	box-shadow: var(--shadow);
+	transform: translateY(-2px);
+}
+
+/* Responsive */
+@media ( max-width : 576px) {
+	form {
+		padding: 24px 16px;
+	}
+}

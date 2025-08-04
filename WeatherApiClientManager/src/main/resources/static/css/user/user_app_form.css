@@ -1,0 +1,115 @@
+@import
+	url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap')
+	;
+
+:root {
+	--primary-color: #007bff;
+	--accent-color: #17c0eb;
+	--bg-color: #f6f9fc;
+	--card-bg: #ffffff;
+	--text-color: #2c3e50;
+	--muted-color: #7f8c8d;
+	--radius: 16px;
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+	--shadow-light: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	text-align: center;
+	color: var(--primary-color);
+	font-weight: 600;
+	margin-top: 32px;
+}
+
+/* Form container */
+form {
+	background-color: var(--card-bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+	padding: 32px;
+	max-width: 700px;
+	margin: 0 auto;
+	transition: box-shadow 0.3s ease;
+}
+
+form:hover {
+	box-shadow: var(--shadow);
+}
+
+label {
+	font-weight: 500;
+	margin-bottom: 6px;
+	color: var(--text-color);
+}
+
+/* Input fields */
+input[type="text"] {
+	border-radius: 10px;
+	box-shadow: none;
+	transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+	border-color: var(--accent-color);
+	box-shadow: 0 0 0 0.2rem rgba(23, 192, 235, 0.25);
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+	transform: scale(1.2);
+	margin-top: 6px;
+}
+
+/* Read-only values */
+#client_id, #client_secret {
+	color: var(--muted-color);
+	font-style: normal;
+	display: inline-block;
+	padding: 8px 0;
+}
+
+/* Buttons */
+.btn {
+	padding: 10px 24px;
+	border-radius: 999px;
+	font-weight: 600;
+	box-shadow: var(--shadow-light);
+	transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+	background: linear-gradient(to right, var(--primary-color),
+		var(--accent-color));
+	border: none;
+	color: white;
+}
+
+.btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow);
+}
+
+.btn-secondary {
+	background-color: #adb5bd;
+	color: white;
+	border: none;
+}
+
+.btn-secondary:hover {
+	background-color: #868e96;
+}
+
+/* Responsive */
+@media ( max-width : 576px) {
+	form {
+		padding: 24px 16px;
+	}
+}

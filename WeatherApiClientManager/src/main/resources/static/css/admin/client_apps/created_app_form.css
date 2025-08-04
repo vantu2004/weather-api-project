@@ -1,0 +1,97 @@
+@import
+	url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap')
+	;
+
+:root {
+	--primary-color: #0d6efd;
+	--danger-color: #dc3545;
+	--success-color: #198754;
+	--bg-color: #f9f9f9;
+	--card-bg: #ffffff;
+	--text-color: #212529;
+	--radius: 16px;
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+	--shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--bg-color);
+	color: var(--text-color);
+}
+
+h2 {
+	text-align: center;
+	color: var(--primary-color);
+	font-weight: 600;
+	margin-top: 24px;
+}
+
+form {
+	background-color: var(--card-bg);
+	padding: 32px;
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-light);
+	margin-top: 16px;
+}
+
+form:hover {
+	box-shadow: var(--shadow);
+}
+
+label {
+	font-weight: 500;
+}
+
+/* Alert */
+.alert-success {
+	background-color: #e9f7ef;
+	border: 1px solid #b5dfc9;
+	color: var(--success-color);
+	font-weight: 500;
+	padding: 12px 20px;
+	border-radius: 12px;
+	font-style: italic;
+}
+
+/* Text warning */
+.text-danger {
+	font-size: 0.9rem;
+	font-weight: 500;
+	color: var(--danger-color);
+	margin-top: 4px;
+}
+
+/* Checkbox */
+input[type="checkbox"] {
+	transform: scale(1.2);
+	margin-top: 2px;
+	cursor: default;
+}
+
+/* Button */
+.btn-secondary {
+	background-color: #6c757d;
+	border: none;
+	border-radius: 999px;
+	padding: 10px 24px;
+	font-weight: 600;
+	box-shadow: var(--shadow-light);
+	transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+	background-color: #5a6268;
+	box-shadow: var(--shadow);
+	transform: translateY(-2px);
+}
+
+/* Responsive */
+@media ( max-width : 576px) {
+	form {
+		padding: 24px 16px;
+	}
+	.text-end {
+		text-align: center !important;
+	}
+}
