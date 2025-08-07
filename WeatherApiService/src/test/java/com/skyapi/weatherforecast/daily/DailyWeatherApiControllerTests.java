@@ -18,17 +18,22 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
+import com.skyapi.weatherforecast.SecurityConfigForControllerTests;
 import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.DailyWeatherId;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.location.LocationNotFoundException;
 
 @WebMvcTest(DailyWeatherApiController.class)
+@Import(SecurityConfigForControllerTests.class)
+@ActiveProfiles("test")
 public class DailyWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/daily";
 	private static final String REQUEST_CONTENT_TYPE = "application/json";

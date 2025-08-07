@@ -21,19 +21,24 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skyapi.weatherforecast.SecurityConfigForControllerTests;
 import com.skyapi.weatherforecast.common.Location;
 
 // chỉ test tầng controller
 @WebMvcTest(LocationApiController.class)
+@Import(SecurityConfigForControllerTests.class)
+@ActiveProfiles("test")
 public class LocationApiControllerTests {
 	private static final String REQUEST_CONTENT_TYPE = "application/json";
 	private static final String END_POINT_PATH = "/v1/locations";

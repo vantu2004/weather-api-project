@@ -17,18 +17,23 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
+import com.skyapi.weatherforecast.SecurityConfigForControllerTests;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeatherId;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.location.LocationNotFoundException;
 
 @WebMvcTest(HourlyWeatherApiController.class)
+@Import(SecurityConfigForControllerTests.class)
+@ActiveProfiles("test")
 public class HourlyWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/hourly";
 	private static final String X_CURRENT_HOUR = "X-Current-Hour";

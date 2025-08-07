@@ -15,16 +15,22 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
+import com.skyapi.weatherforecast.SecurityConfigForControllerTests;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.common.RealtimeWeather;
 import com.skyapi.weatherforecast.location.LocationNotFoundException;
 
 @WebMvcTest(RealtimeWeatherApiController.class)
+@Import(SecurityConfigForControllerTests.class)
+// Dùng để nói với Spring khi chạy test class này, hãy dùng profile tên "test".
+@ActiveProfiles("test")
 public class RealtimeWeatherApiControllerTests {
 	private static final String END_POINT_PATH = "/v1/realtime";
 	private static final String REQUEST_CONTENT_TYPE = "application/json";

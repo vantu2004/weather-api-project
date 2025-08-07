@@ -4,6 +4,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,8 +16,11 @@ import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.daily.DailyWeatherDTO;
 import com.skyapi.weatherforecast.full.FullWeatherDTO;
 import com.skyapi.weatherforecast.hourly.HourlyWeatherDTO;
+import com.skyapi.weatherforecast.security.RsaKeyProperties;
 
 @SpringBootApplication
+// sau khi tạo Bean RsaKeyProperties thì sẽ binding dữ liệu theo cấu hình trong properties vào field
+@EnableConfigurationProperties(RsaKeyProperties.class)
 public class WeatherApiServiceApplication {
 
 	/*
