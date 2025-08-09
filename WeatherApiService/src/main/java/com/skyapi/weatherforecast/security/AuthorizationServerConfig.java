@@ -1,7 +1,12 @@
 package com.skyapi.weatherforecast.security;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -10,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet.Builder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -17,6 +23,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.JWK;
@@ -35,34 +43,37 @@ import lombok.RequiredArgsConstructor;
 public class AuthorizationServerConfig {
 	private final RsaKeyProperties rsaKeyProperties;
 
-	// Bean để giải mã (decode) JWT sử dụng public key
+	@Value("${app.security.jwt.issuer}")
+	private String issuerName;
+
+	@Value("${app.security.jwt.access-token.expiration}")
+	private int accessTokenExpirationTime;
+
+	/*
+	 * Khi Client gửi request đến API kèm Access Token (Bearer ...),
+	 * NimbusJwtDecoder sử dụng khóa công khai từ rsaKeyProperties.getPublicKey() để
+	 * xác minh chữ ký trong Access Token (JWT)
+	 */
 	@Bean
 	public JwtDecoder jwtDecoder() {
-		/*
-		 * Tạo một JwtDecoder sử dụng public key từ class rsaKeyProperties. Dùng để xác
-		 * minh token được gửi từ client
-		 */
 		return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.getPublicKey()).build();
 	}
 
-	// Bean để mã hóa (encode) JWT sử dụng private key
+	/*
+	 * JwtEncoder chịu trách nhiệm tạo JWT và ký nó bằng khóa bí mật RSA.
+	 * 
+	 * Khi client gửi request tới /oauth2/token, OAuth2 Server sử dụng
+	 * RegisteredClientRepository để kiểm tra client_id và client_secret trong cơ sở
+	 * dữ liệu (thông qua ClientAppRepository). Tiếp tục tạo header/payload của JWT.
+	 * Cuối cùng dùng privateKey để ký cho JWT (phần này gọi là JWS)
+	 */
 	@Bean
 	public JwtEncoder jwtEncoder() {
-		/*
-		 * Tạo một đối tượng JWK (JSON Web Key) từ cặp khóa RSA JWK là định dạng chuẩn
-		 * để biểu diễn khóa dưới dạng JSON
-		 */
-		JWK jwk = new RSAKey.Builder(rsaKeyProperties.getPublicKey()) // Thiết lập public key
-				.privateKey(rsaKeyProperties.getPrivateKey()) // Thiết lập private key (dùng để ký token)
+		JWK jwk = new RSAKey.Builder(rsaKeyProperties.getPublicKey()).privateKey(rsaKeyProperties.getPrivateKey())
 				.build();
 
-		/*
-		 * Tạo một nguồn JWK bất biến (immutable) chứa JWK vừa tạo Đây là nơi
-		 * NimbusJwtEncoder sẽ lấy khóa để ký token
-		 */
 		JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
 
-		// Tạo một encoder để tạo JWT, sử dụng nguồn JWK đã khai báo ở trên
 		return new NimbusJwtEncoder(jwkSource);
 	}
 
@@ -71,19 +82,37 @@ public class AuthorizationServerConfig {
 		return new BCryptPasswordEncoder();
 	}
 
+	/**
+	 * Cấu hình SecurityFilterChain cho Authorization Server.
+	 * 
+	 * @param http đối tượng HttpSecurity dùng để cấu hình các rule bảo mật.
+	 * @return SecurityFilterChain đã cấu hình cho Authorization Server.
+	 */
 	@Bean
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChainOAuth2AuthorizationServer(HttpSecurity http) throws Exception {
+		// Tạo cấu hình Authorization Server
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer
 				.authorizationServer();
 
-		http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-				.with(authorizationServerConfigurer,
-						(authorizationServer) -> authorizationServer.oidc(Customizer.withDefaults()))
+		http
+				/*
+				 * Chỉ áp dụng cấu hình bảo mật cho các request khớp với endpoints của
+				 * Authorization Server
+				 */
+				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+				// Gắn cấu hình Authorization Server vào HttpSecurity
+				.with(authorizationServerConfigurer, (authorizationServer) ->
+				// Bật hỗ trợ OpenID Connect (OIDC) với cấu hình mặc định
+				authorizationServer.oidc(Customizer.withDefaults()))
 				.authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated());
 
 		return http.build();
 	}
 
+	/*
+	 * RegisteredClientRepository để kiểm tra client_id và client_secret trong cơ sở
+	 * dữ liệu (thông qua ClientAppRepository)
+	 */
 	@Bean
 	public RegisteredClientRepository registeredClientRepository(ClientAppRepository clientAppRepository) {
 		return new RegisteredClientRepository() {
@@ -106,11 +135,37 @@ public class AuthorizationServerConfig {
 				}
 
 				ClientApp clientApp = clientAppOptional.get();
-				return RegisteredClient.withId(clientApp.getId().toString()).clientId(clientApp.getId().toString())
-						.clientSecret(clientApp.getClientSecret())
+				return RegisteredClient.withId(clientApp.getId().toString()).clientId(clientApp.getClientId())
+						.clientSecret(clientApp.getClientSecret()).clientName(clientApp.getName())
 						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
 						.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 						.scope(clientApp.getRole().toString()).build();
+
+			}
+		};
+
+	}
+
+	@Bean
+	public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
+		return new OAuth2TokenCustomizer<JwtEncodingContext>() {
+
+			@Override
+			public void customize(JwtEncodingContext context) {
+				RegisteredClient registeredClient = context.getRegisteredClient();
+
+				Builder builder = context.getClaims();
+				builder.issuer(issuerName);
+				builder.expiresAt(Instant.now().plus(accessTokenExpirationTime, ChronoUnit.MINUTES));
+				builder.claims(new Consumer<Map<String, Object>>() {
+
+					@Override
+					public void accept(Map<String, Object> t) {
+						t.put("scope", registeredClient.getScopes());
+						t.put("name", registeredClient.getClientName());
+						t.remove("aud");
+					}
+				});
 
 			}
 		};

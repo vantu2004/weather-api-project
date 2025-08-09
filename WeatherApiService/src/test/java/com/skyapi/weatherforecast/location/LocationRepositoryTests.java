@@ -35,15 +35,15 @@ public class LocationRepositoryTests {
 	@Test
 	public void testAddLocation() {
 		Location location = new Location();
-		location.setCode("HCM_VN");
-		location.setCityName("Ho Chi Minh City");
-		location.setRegionName("Ho Chi Minh");
+		location.setCode("DL_VN");
+		location.setCityName("Da Lat City");
+		location.setRegionName("Da Lat");
 		location.setCountryName("Vietnam");
 		location.setCountryCode("VN");
 
 		Location savedLocation = this.locationRepository.save(location);
 
-		assertThat(savedLocation.getCode()).isEqualTo("HCM_VN");
+		assertThat(savedLocation.getCode()).isEqualTo("DL_VN");
 	}
 
 	@Test
