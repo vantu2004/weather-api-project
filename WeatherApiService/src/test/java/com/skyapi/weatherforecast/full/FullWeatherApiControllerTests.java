@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -197,6 +198,7 @@ public class FullWeatherApiControllerTests {
 		String expectedLocation = location.toString();
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isOk())
+				.andExpect(header().string("Cache-Control", containsString("max-age=1800")))
 				.andExpect(jsonPath("$.location", is(expectedLocation)))
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/full/" + locationCode)))

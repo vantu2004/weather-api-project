@@ -1,7 +1,11 @@
 package com.skyapi.weatherforecast.full;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +40,9 @@ public class FullWeatherApiController {
 
 		FullWeatherDTO fullWeatherDTO = this.convertLocationEntityToFullWeatherDTO(location);
 
-		return ResponseEntity.ok(this.fullWeatherModelAssembler.toModel(fullWeatherDTO));
+		EntityModel<FullWeatherDTO> entity = this.fullWeatherModelAssembler.toModel(fullWeatherDTO);
+
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES).cachePublic()).body(entity);
 	}
 
 	@GetMapping("/{locationCode}")
@@ -45,7 +51,10 @@ public class FullWeatherApiController {
 
 		FullWeatherDTO fullWeatherDTO = this.convertLocationEntityToFullWeatherDTO(location);
 
-		return ResponseEntity.ok(this.fullWeatherModelAssembler.addLinksByLocation(locationCode, fullWeatherDTO));
+		EntityModel<FullWeatherDTO> entity = this.fullWeatherModelAssembler.addLinksByLocation(locationCode,
+				fullWeatherDTO);
+
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES).cachePublic()).body(entity);
 	}
 
 	@PutMapping("/{locationCode}")

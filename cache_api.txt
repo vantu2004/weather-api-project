@@ -1,0 +1,13 @@
+1. Expires
+	-	/v1/locations (7 DAYS)
+	
+2. Cache-Control
+	-	/v1/daily (6 HOURS)
+	-	/v1/hourly (60 MINUTES)
+	-	/v1/full (30 MINUTES)
+	
+3. Cache-Control & ETag (ETag dùng để check dữ liệu có thay đổi hay ko)
+	-	/v1/locations/{code} (7 DAYS)
+
+4. Cache-Control & Last-Modified
+	- 	/v1/realtime/{code} (30 MINUTES)

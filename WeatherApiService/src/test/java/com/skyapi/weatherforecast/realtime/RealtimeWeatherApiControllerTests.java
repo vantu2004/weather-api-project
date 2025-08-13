@@ -1,10 +1,12 @@
 package com.skyapi.weatherforecast.realtime;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -92,6 +94,8 @@ public class RealtimeWeatherApiControllerTests {
 
 		mockMvc.perform(get(END_POINT_PATH)).andExpect(status().isOk())
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(header().string("Cache-Control", containsString("max-age=1800")))
+				.andExpect(header().exists("Last-Modified"))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime")))
 				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly")))
 				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily")))
@@ -140,6 +144,8 @@ public class RealtimeWeatherApiControllerTests {
 
 		mockMvc.perform(get(requestUri)).andExpect(status().isOk())
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(header().string("Cache-Control", containsString("max-age=1800")))
+				.andExpect(header().exists("Last-Modified"))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime/" + locationCode)))
 				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
 				.andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))

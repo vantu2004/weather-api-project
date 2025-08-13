@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -108,6 +109,7 @@ public class DailyWeatherApiControllerTests {
 				.andExpect(jsonPath("$.location", is(expectedLocation)))
 				.andExpect(jsonPath("$.daily_forecast[0].day_of_month", is(2)))
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(header().string("Cache-Control", containsString("max-age=21600")))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/daily")))
 				.andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime")))
 				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly")))
@@ -163,6 +165,7 @@ public class DailyWeatherApiControllerTests {
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.location", is(expectedLocation)))
+				.andExpect(header().string("Cache-Control", containsString("max-age=21600")))
 				.andExpect(jsonPath("$.daily_forecast[0].day_of_month", is(2)))
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/daily/" + locationCode)))

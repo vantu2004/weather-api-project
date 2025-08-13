@@ -5,11 +5,13 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,7 +64,11 @@ public class HourlyWeatherApiController {
 			}
 
 			HourlyWeatherListDTO hourlyWeatherListDTO = this.convertListHourlyWeatherToDTO(hourlyWeathers);
-			return ResponseEntity.ok().body(this.addLinksByIp(hourlyWeatherListDTO));
+
+			HourlyWeatherListDTO entity = this.addLinksByIp(hourlyWeatherListDTO);
+
+			return ResponseEntity.ok().cacheControl(CacheControl.maxAge(60, TimeUnit.MINUTES).cachePublic())
+					.body(entity);
 		} catch (NumberFormatException e) {
 			LOGGER.error(e.getMessage(), e);
 			return ResponseEntity.badRequest().build();
@@ -85,7 +91,10 @@ public class HourlyWeatherApiController {
 
 			HourlyWeatherListDTO hourlyWeatherListDTO = this.convertListHourlyWeatherToDTO(hourlyWeathers);
 
-			return ResponseEntity.ok().body(this.addLinksByLocation(locationCode, hourlyWeatherListDTO));
+			HourlyWeatherListDTO entity = this.addLinksByLocation(locationCode, hourlyWeatherListDTO);
+
+			return ResponseEntity.ok().cacheControl(CacheControl.maxAge(60, TimeUnit.MINUTES).cachePublic())
+					.body(entity);
 		} catch (NumberFormatException e) {
 			LOGGER.error(e.getMessage(), e);
 			return ResponseEntity.badRequest().build();

@@ -3,6 +3,16 @@ package com.skyapi.weatherforecast.realtime;
 import org.modelmapper.ModelMapper;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +20,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.skyapi.weatherforecast.GeolocationService;
 import com.skyapi.weatherforecast.common.Location;
@@ -42,7 +54,7 @@ public class RealtimeWeatherApiController {
 
 		RealtimeWeatherDTO realtimeWeatherDTO = this.modelMapper.map(realtimeWeather, RealtimeWeatherDTO.class);
 
-		return ResponseEntity.ok(addLinksByIp(realtimeWeatherDTO));
+		return includeLastModified(this.addLinksByIp(realtimeWeatherDTO));
 	}
 
 	@GetMapping("/{locationCode}")
@@ -50,7 +62,38 @@ public class RealtimeWeatherApiController {
 		RealtimeWeather realtimeWeather = this.realtimeWeatherService.getRealtimeWeatherByLocationCode(locationCode);
 		RealtimeWeatherDTO realtimeWeatherDTO = this.convertEntityToDTO(realtimeWeather);
 
-		return ResponseEntity.ok(addLinksByLocation(locationCode, realtimeWeatherDTO));
+		return includeLastModified(this.addLinksByLocation(locationCode, realtimeWeatherDTO));
+	}
+
+	private ResponseEntity<?> includeLastModified(RealtimeWeatherDTO realtimeWeatherDTO) {
+		Instant lastUpdated = realtimeWeatherDTO.getLastUpdated().toInstant();
+
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+				.getRequest();
+		Optional<String> ifModifiedSinceHeader = Optional.ofNullable(request.getHeader("If-Modified-Since"));
+
+		if (ifModifiedSinceHeader.isPresent()) {
+			// realtimeWeatherDTO.getLastUpdated() có kiểu Date nên chỉ cần ép Instant là đủ
+			DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
+			Instant ifModifiedSince = ZonedDateTime.parse(ifModifiedSinceHeader.get(), formatter).toInstant();
+
+			if (!lastUpdated.isAfter(ifModifiedSince)) {
+				return ResponseEntity.status(HttpStatusCode.valueOf(304)).build();
+			}
+		}
+
+		/*
+		 * khi dùng cache-control với max-age > 0, trình duyệt hoặc một proxy ở giữa đã
+		 * lưu header/body nên brower sẽ ko gửi request đến server -> việc check
+		 * last-modified ko diễn ra, việc check last-modified chỉ diễn ra khi cache hết
+		 * hạn
+		 * 
+		 * check last-modified để đảm bảo là dữ liệu ko đổi và trả về 304 (Not Modified)
+		 * hoặc 200 (OK) với body mới, việc check do spring tự thực hiện mà ko cần check
+		 * thủ công như ETag
+		 */
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES).cachePublic())
+				.lastModified(lastUpdated).body(realtimeWeatherDTO);
 	}
 
 	@PutMapping("{locationCode}")

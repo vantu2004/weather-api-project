@@ -3,12 +3,14 @@ package com.skyapi.weatherforecast.location;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -194,6 +196,7 @@ public class LocationApiControllerTests {
 
 		mockMvc.perform(get(requestURI)).andExpect(status().isOk())
 				.andExpect(content().contentType("application/hal+json"))
+				.andExpect(header().string("Expires", not("0")))
 				.andExpect(jsonPath("_embedded.locations[0].code", is("HCM_VN")))
 				.andExpect(jsonPath("_embedded.locations[0].city_name", is("Ho Chi Minh City")))
 				.andExpect(jsonPath("_embedded.locations[1].code", is("DN_VN")))
@@ -421,6 +424,8 @@ public class LocationApiControllerTests {
 
 		mockMvc.perform(get(requestUri)).andExpect(status().isOk()).andExpect(status().isOk())
 				.andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+				.andExpect(header().string("Cache-Control", containsString("max-age=604800")))
+				.andExpect(header().exists("ETag"))
 				.andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + locationCode)))
 				.andExpect(jsonPath("$._links.realtime.href", is("http://localhost/v1/realtime/" + locationCode)))
 				.andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))

@@ -2,6 +2,7 @@ package com.skyapi.weatherforecast.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@Profile("production")
 public class ResourceServerConfig {
 	private static final String LOCATION_ENDPOINT_PATTERN = "/v1/locations/**";
 	private static final String REALTIME_WEATHER_ENDPOINT_PATTERN = "/v1/realtime/**";

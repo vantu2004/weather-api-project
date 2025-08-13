@@ -4,9 +4,14 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.coyote.BadRequestException;
@@ -16,6 +21,10 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.PagedModel.PageMetadata;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.daily.DailyWeatherApiController;
@@ -34,6 +45,7 @@ import com.skyapi.weatherforecast.full.FullWeatherApiController;
 import com.skyapi.weatherforecast.hourly.HourlyWeatherApiController;
 import com.skyapi.weatherforecast.realtime.RealtimeWeatherApiController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -117,8 +129,15 @@ public class LocationApiController {
 
 		List<LocationDTO> locationDTOs = this.convertListLocationEntityToDTO(listLocations);
 
-		return ResponseEntity.ok(this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs, sortOption,
-				enabled, regionName, countryCode));
+		// Expires khá cũ, ko còn mạnh và tùy biến như Cache-control
+		HttpHeaders headers = new HttpHeaders();
+		// set thời gian hết hạn là 7 ngày
+		headers.setExpires(Instant.now().plus(7, ChronoUnit.DAYS));
+
+		CollectionModel<LocationDTO> body = this.addPageMetaDataAndLinksToCollection(pageLocations, locationDTOs,
+				sortOption, enabled, regionName, countryCode);
+
+		return new ResponseEntity<>(body, headers, HttpStatus.OK);
 	}
 
 	private String validateSortOption(String sortOption) throws BadRequestException {
@@ -247,7 +266,28 @@ public class LocationApiController {
 		Location location = this.locationService.getLocationByCode(code);
 		LocationDTO locationDTO = this.convertLocationEntityToDTO(location);
 
-		return ResponseEntity.ok(this.addLinksByLocation(locationDTO));
+		String etagValue = "\"" + Objects.hash(locationDTO.getCode(), locationDTO.getCityName(),
+				locationDTO.getRegionName(), location.getCountryCode(), locationDTO.getCountryName()) + "\"";
+
+		/*
+		 * khi dùng cache-control với max-age > 0, trình duyệt hoặc một proxy ở giữa đã
+		 * lưu header/body nên brower sẽ ko gửi request đến server -> việc check etag ko
+		 * diễn ra, việc check etag chỉ diễn ra khi cache hết hạn
+		 * 
+		 * check etag để đảm bảo là dữ liệu ko đổi và trả về 304 (Not Modified) hoặc 200
+		 * (OK) với body mới
+		 */
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+				.getRequest();
+		Optional<String> etag = Optional.ofNullable(request.getHeader("If-None-Match"));
+		if (!etag.isPresent() && etagValue.equals(etag)) {
+			return ResponseEntity.status(HttpStatusCode.valueOf(304)).build();
+		}
+
+		LocationDTO entity = this.addLinksByLocation(locationDTO);
+
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(7, TimeUnit.DAYS).cachePublic()).eTag(etagValue)
+				.body(entity);
 	}
 
 	@PutMapping

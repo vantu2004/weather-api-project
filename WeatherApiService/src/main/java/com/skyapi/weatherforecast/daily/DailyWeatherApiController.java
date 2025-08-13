@@ -5,10 +5,12 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,7 +54,9 @@ public class DailyWeatherApiController {
 
 		DailyWeatherListDTO dailyWeatherListDTO = this.convertListDailyWeatherToDTO(dailyWeathers);
 
-		return ResponseEntity.ok().body(this.addLinksByIp(dailyWeatherListDTO));
+		EntityModel<DailyWeatherListDTO> entity = this.addLinksByIp(dailyWeatherListDTO);
+
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(6, TimeUnit.HOURS).cachePublic()).body(entity);
 	}
 
 	@GetMapping("/{locationCode}")
@@ -65,7 +69,9 @@ public class DailyWeatherApiController {
 
 		DailyWeatherListDTO dailyWeatherListDTO = this.convertListDailyWeatherToDTO(dailyWeathers);
 
-		return ResponseEntity.ok().body(this.addLinksByLocation(locationCode, dailyWeatherListDTO));
+		EntityModel<DailyWeatherListDTO> entity = this.addLinksByLocation(locationCode, dailyWeatherListDTO);
+
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(6, TimeUnit.HOURS).cachePublic()).body(entity);
 	}
 
 	@PutMapping("/{locationCode}")
