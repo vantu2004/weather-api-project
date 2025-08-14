@@ -2,6 +2,9 @@ package com.skyapi.weatherforecast.realtime;
 
 import java.util.Date;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.skyapi.weatherforecast.common.Location;
@@ -17,6 +20,7 @@ public class RealtimeWeatherService {
 	private final RealtimeWeatherRepository realtimeWeatherRepository;
 	private final LocationRepository locationRepository;
 
+	@Cacheable(cacheNames = "realtimeWeatherCacheByCountryCodeAndCityName", key = "{#location.countryCode, #location.cityName}")
 	public RealtimeWeather getRealtimeWeatherByCountryCodeAndCityName(Location location) {
 		String countryCode = location.getCountryCode();
 		String cityName = location.getCityName();
@@ -30,6 +34,7 @@ public class RealtimeWeatherService {
 		return realtimeWeather;
 	}
 
+	@Cacheable("realtimeWeatherCacheByCode")
 	public RealtimeWeather getRealtimeWeatherByLocationCode(String locationCode) {
 		RealtimeWeather realtimeWeather = this.realtimeWeatherRepository.findByLocationCode(locationCode);
 		if (realtimeWeather == null) {
@@ -39,6 +44,8 @@ public class RealtimeWeatherService {
 		return realtimeWeather;
 	}
 
+	@CachePut(cacheNames = "realtimeWeatherCacheByCode", key = "#locationCode")
+	@CacheEvict(cacheNames = "realtimeWeatherCacheByCountryCodeAndCityName", allEntries = true)
 	public RealtimeWeather updateRealtimeWeather(String locationCode, RealtimeWeather realtimeWeather) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {

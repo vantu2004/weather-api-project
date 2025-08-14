@@ -11,3 +11,17 @@
 
 4. Cache-Control & Last-Modified
 	- 	/v1/realtime/{code} (30 MINUTES)
+	
+5. Cacheable (Server-Side)
+	-	/v1/locations (getAllLocationUnTrashedWithFilter(...) - LocationService.java)
+	-	/v1/locations/{code} (getLocationByCode(...) - AbstractLocationService.java)
+	-	/v1/realtime (getRealtimeWeatherByLocationCode(...) - RealtimeWeatherService.java)
+	-	/v1/realtime (getRealtimeWeatherByCountryCodeAndCityName(...) - RealtimeWeatherService.java)
+
+6. CachePut & CacheEvict (Server-Side)
+	-	/v1/locations (add(...) - LocationService.java)
+	-	/v1/locations (updateLocation(...) - LocationService.java)
+	-	/v1/realtime (updateRealtimeWeather(...) - RealtimeWeatherService.java)
+
+7. CacheEvict (Server-Side)
+	-	/v1/locations (deleteLocation(...) - LocationService.java)

@@ -3,6 +3,10 @@ package com.skyapi.weatherforecast.location;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,13 +17,22 @@ import com.skyapi.weatherforecast.AbstractLocationService;
 import com.skyapi.weatherforecast.common.Location;
 
 @Service
+@EnableCaching
 public class LocationService extends AbstractLocationService {
 
 	public LocationService(LocationRepository locationRepository) {
 		super();
+		// locationRepository kế thừa từ AbstractLocationService
 		this.locationRepository = locationRepository;
 	}
 
+	// Luôn chạy method và cập nhật cache với kết quả mới.
+	@CachePut(cacheNames = "locationCacheByCode", key = "#location.code")
+	/*
+	 * sau khi thêm location mới thì xóa hết key trong cache
+	 * locationCacheByPagination
+	 */
+	@CacheEvict(cacheNames = "locationCacheByPagination", allEntries = true)
 	public Location add(Location location) {
 		return this.locationRepository.save(location);
 	}
@@ -38,11 +51,16 @@ public class LocationService extends AbstractLocationService {
 		return this.locationRepository.findAllUnTrashed(pageable);
 	}
 
+	/*
+	 * lưu với cache tên locationCacheByPagination, trong cache này lấy hết các tham
+	 * số đầu vào làm key
+	 */
+	@Cacheable("locationCacheByPagination")
 	public Page<Location> getAllLocationUnTrashedWithFilter(Integer pageNum, Integer pageSize, String sortOption,
 			Map<String, Object> filterFields) {
 
 		// tránh null
-		Sort sort = Sort.unsorted(); 
+		Sort sort = Sort.unsorted();
 
 		String[] sortFields = sortOption.split(",");
 		for (String sortField : sortFields) {
@@ -56,6 +74,12 @@ public class LocationService extends AbstractLocationService {
 		return this.locationRepository.listWithFilter(pageable, filterFields);
 	}
 
+	/*
+	 * cập nhật dữ liệu trong cache locationCacheByCode và tất cả dữ liệu trong
+	 * cache locationCacheByPagination
+	 */
+	@CachePut(cacheNames = "locationCacheByCode", key = "#locationInRequest.code")
+	@CacheEvict(cacheNames = "locationCacheByPagination", allEntries = true)
 	public Location updateLocation(Location locationInRequest) {
 		String code = locationInRequest.getCode();
 		Location locationInDb = this.getLocationByCode(code);
@@ -66,6 +90,8 @@ public class LocationService extends AbstractLocationService {
 		return this.locationRepository.save(locationInDb);
 	}
 
+	// xóa dữ liệu đồng thời trong 2 cache
+	@CacheEvict(cacheNames = { "locationCacheByCode", "locationCacheByPagination" }, allEntries = true)
 	public void deleteLocation(String code) {
 		this.getLocationByCode(code);
 		this.locationRepository.trashByCode(code);
