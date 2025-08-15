@@ -2,6 +2,8 @@ package com.skyapi.weatherforecast.hourly;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.skyapi.weatherforecast.common.HourlyWeather;
@@ -21,6 +23,7 @@ public class HourlyWeatherService {
 	 * controller truyền location lấy đc từ ipAddress nên không đủ thông tin (thiếu
 	 * locationCode)
 	 */
+	@Cacheable(cacheNames = "hourlyWeatherCacheByCountryCodeAndCityNameAndCurrentHour", key = "{#location.countryCode, #location.cityName, #currentHour}")
 	public List<HourlyWeather> getListHourlyWeather(Location location, int currentHour)
 			throws LocationNotFoundException {
 		String countryCode = location.getCountryCode();
@@ -34,6 +37,7 @@ public class HourlyWeatherService {
 		return this.hourlyWeatherRepository.findByLocationCodeAndHourOfDay(locationInDB.getCode(), currentHour);
 	}
 
+	@Cacheable("hourlyWeatherCacheByLocationCodeAndCurrentHour")
 	public List<HourlyWeather> getHourlyWeatherByLocationCodeAndCurrentHour(String locationCode, int currentHour) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {
@@ -43,6 +47,9 @@ public class HourlyWeatherService {
 		return this.hourlyWeatherRepository.findByLocationCodeAndHourOfDay(locationCode, currentHour);
 	}
 
+	// ko có currentHour để load lại cache nào nên xóa hết cache luôn
+	@CacheEvict(cacheNames = { "hourlyWeatherCacheByCountryCodeAndCityNameAndCurrentHour",
+			"hourlyWeatherCacheByLocationCodeAndCurrentHour" }, allEntries = true)
 	public List<HourlyWeather> updateHourlyWeather(String locationCode, List<HourlyWeather> hourlyWeathers) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {

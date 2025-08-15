@@ -2,6 +2,9 @@ package com.skyapi.weatherforecast.daily;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.skyapi.weatherforecast.common.DailyWeather;
@@ -18,6 +21,7 @@ public class DailyWeatherService {
 	private final LocationRepository locationRepository;
 
 	// location lấy bằng ipAddress nếu thiếu thông tin (thiếu locationCode)
+	@Cacheable(cacheNames = "dailyWeatherCacheByCountryCodeAndCityName", key = "{#location.countryCode, #location.cityName}")
 	public List<DailyWeather> getDailyWeatherByLocation(Location location) {
 		String countryCode = location.getCountryCode();
 		String cityName = location.getCityName();
@@ -30,6 +34,7 @@ public class DailyWeatherService {
 		return this.dailyWeatherRepository.findByLocationCode(locationInDB.getCode());
 	}
 
+	@Cacheable("dailyWeatherCacheByLocationCode")
 	public List<DailyWeather> getDailyWeatherByLocationCode(String locationCode) {
 		Location locationInDB = this.locationRepository.findByCode(locationCode);
 		if (locationInDB == null) {
@@ -39,6 +44,8 @@ public class DailyWeatherService {
 		return this.dailyWeatherRepository.findByLocationCode(locationInDB.getCode());
 	}
 
+	@CachePut(cacheNames = "dailyWeatherCacheByLocationCode", key = "#locationCode")
+	@CacheEvict(cacheNames = "dailyWeatherCacheByCountryCodeAndCityName", allEntries = true)
 	public List<DailyWeather> updateDailyWeather(String locationCode, List<DailyWeather> dailyWeathers) {
 		Location location = this.locationRepository.findByCode(locationCode);
 		if (location == null) {

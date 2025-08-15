@@ -3,6 +3,10 @@ package com.skyapi.weatherforecast.full;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import com.skyapi.weatherforecast.AbstractLocationService;
@@ -21,6 +25,7 @@ public class FullWeatherService extends AbstractLocationService {
 		this.locationRepository = locationRepository;
 	}
 
+	@Cacheable(cacheNames = "fullWeatherCacheByCountryCodeAndCityName", key = "{#locationFromIp.countryCode, #locationFromIp.cityName}")
 	public Location getLocationByIpAddress(Location locationFromIp) {
 		String countryCode = locationFromIp.getCountryCode();
 		String cityName = locationFromIp.getCityName();
@@ -32,6 +37,21 @@ public class FullWeatherService extends AbstractLocationService {
 
 		return location;
 	}
+
+	/*
+	 * vì hàm này cập nhật realtime/hourly/daily nên buộc phải xóa hết cache cũ liên
+	 * quan, nhưng @Cacheable/@CachePut/@CacheEvict ko cho dùng lặp nhiều lần nên
+	 * dùng @Caching để quản lý và dùng nhiều lần
+	 */
+	@Caching(put = { @CachePut(cacheNames = "locationCacheByCode", key = "#locationCode") },
+
+			evict = { @CacheEvict(cacheNames = { "fullWeatherCacheByCountryCodeAndCityName",
+					"realtimeWeatherCacheByCountryCodeAndCityName", "hourlyWeatherCacheByLocationCodeAndCurrentHour",
+					"hourlyWeatherCacheByCountryCodeAndCityNameAndCurrentHour",
+					"dailyWeatherCacheByCountryCodeAndCityName" }, allEntries = true),
+
+					@CacheEvict(cacheNames = { "realtimeWeatherCacheByCode",
+							"dailyWeatherCacheByLocationCode" }, key = "#locationCode") })
 
 	public Location updateFullWeather(String locationCode, Location locationInRequest) {
 		Location locationInDB = this.locationRepository.findByCode(locationCode);

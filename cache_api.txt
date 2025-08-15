@@ -17,11 +17,21 @@
 	-	/v1/locations/{code} (getLocationByCode(...) - AbstractLocationService.java)
 	-	/v1/realtime (getRealtimeWeatherByLocationCode(...) - RealtimeWeatherService.java)
 	-	/v1/realtime (getRealtimeWeatherByCountryCodeAndCityName(...) - RealtimeWeatherService.java)
-
+	-	/v1/hourly (getListHourlyWeather(...) - HourlyWeatherService.java)
+	-	/v1/hourly/{locationCode} (getHourlyWeatherByLocationCodeAndCurrentHour(...) - HourlyWeatherService.java)
+	-	/v1/daily (getDailyWeatherByLocation(...) - DailyWeatherService.java)
+	-	/v1/daily/{locationCode} (dailyWeatherCacheByLocationCode(...) - DailyWeatherService.java)
+	-	/v1/full (getLocationByIpAddress(...) - FullWeatherService.java)
+	
 6. CachePut & CacheEvict (Server-Side)
 	-	/v1/locations (add(...) - LocationService.java)
 	-	/v1/locations (updateLocation(...) - LocationService.java)
 	-	/v1/realtime (updateRealtimeWeather(...) - RealtimeWeatherService.java)
+	-	/v1/daily (updateDailyWeather(...) - DailyWeatherService.java)
 
 7. CacheEvict (Server-Side)
 	-	/v1/locations (deleteLocation(...) - LocationService.java)
+	-	/v1/hourly (updateHourlyWeather(...) - HourlyWeatherService.java)
+	
+8. Caching (Server-Side)
+	-	/v1/full (updateFullWeather - FullWeatherService.java)
